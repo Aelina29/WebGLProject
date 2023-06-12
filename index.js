@@ -269,33 +269,50 @@ void main(void) {
 //============================================================================================================
 
 const ROTATION_SPEED = 0.015;
-let currentSpeed = 0;
+const MOVE_SPEED = 0.05;
+let currentSpeedRotation = 0;
+let currentSpeedX = 0;
+let currentSpeedY = 0;
+let currentSpeedZ = 0;
 let currentMode = 0;
 curRotations = [0.0, 0.0, 0.0];
+curPositionCenter = [0, -2, -10];
 
-// window.addEventListener('keydown', event => {
-//     if (event.key.toLowerCase() === 'a' || event.key === 'ArrowLeft') // A, Left
-//         currentSpeed = -ROTATION_SPEED;
-//     else if (event.key.toLowerCase() === 'd' || event.key === 'ArrowRight') // D, Right
-//         currentSpeed = ROTATION_SPEED;
-// });
-// window.addEventListener('keyup', event => {
-//     if (event.key.toLowerCase() === 'a' || event.key === 'ArrowLeft') // A, Left
-//         currentSpeed = 0;
-//     else if (event.key.toLowerCase() === 'd' || event.key === 'ArrowRight') // D, Right
-//         currentSpeed = 0;
-// });
 window.addEventListener('keydown', event => {
-    if (event.key === 'ArrowLeft') //Left
-        currentSpeed = -ROTATION_SPEED;
-    else if (event.key === 'ArrowRight') //Right
-        currentSpeed = ROTATION_SPEED;
+    if (event.key === 'ArrowLeft')              //<-, влево поворот
+        currentSpeedRotation = -ROTATION_SPEED;
+    else if (event.key === 'ArrowRight')        //->, вправо поворот
+        currentSpeedRotation = ROTATION_SPEED;
+    else if (event.key.toLowerCase() === 'a')   //A, лево
+        currentSpeedX = -MOVE_SPEED;
+    else if (event.key.toLowerCase() === 'd')   //D, правл
+        currentSpeedX = MOVE_SPEED;
+    else if (event.key.toLowerCase() === 's')   //S, низ
+        currentSpeedY = -MOVE_SPEED;
+    else if (event.key.toLowerCase() === 'w')   //W, верх
+        currentSpeedY = MOVE_SPEED;  
+    else if (event.key === 'ArrowUp')   //стрелка вверх, дальше
+        currentSpeedZ = MOVE_SPEED;
+    else if (event.key === 'ArrowDown')   //стрелка вниз, ближе
+        currentSpeedZ = -MOVE_SPEED;          
 });
 window.addEventListener('keyup', event => {
-    if (event.key === 'ArrowLeft') //Left
-        currentSpeed = 0;
-    else if (event.key === 'ArrowRight') //Right
-        currentSpeed = 0;
+    if (event.key === 'ArrowLeft')              //<-, влево поворот
+        currentSpeedRotation = 0;
+    else if (event.key === 'ArrowRight')        //->, вправо поворот
+        currentSpeedRotation = 0;
+    else if (event.key.toLowerCase() === 'a')   //A, лево
+        currentSpeedX = 0;
+    else if (event.key.toLowerCase() === 'd')   //D, правл
+        currentSpeedX = 0;
+    else if (event.key.toLowerCase() === 's')   //S, низ
+        currentSpeedY = 0;
+    else if (event.key.toLowerCase() === 'w')   //W, верх
+        currentSpeedY = 0;  
+    else if (event.key === 'ArrowUp')   //стрелка вверх, дальше
+        currentSpeedZ = 0;
+    else if (event.key === 'ArrowDown')   //стрелка вниз, ближе
+        currentSpeedZ = 0;  
 });
 
 [...document.querySelectorAll('input[type="radio"]')].forEach(el => el.addEventListener('change', event => {
@@ -390,11 +407,17 @@ class Scene {
                 mat4.translate(textureMatrix, textureMatrix, [-0.5, -0.5, 0.0]);
     
                 var modelViewMatrix = mat4.create();
+                
+                //движение
+                curPositionCenter = [curPositionCenter[0]+currentSpeedX, curPositionCenter[1]+currentSpeedY, curPositionCenter[2]+currentSpeedZ];
+                obj.position = curPositionCenter;
+                //console.log(obj.position);
                 obj.toPosition(modelViewMatrix);
                 rotatePedestalAroundWorldCenter(obj, modelViewMatrix, curRotations[2]);
                 rotatePedestalAroundSelfCenter(obj, modelViewMatrix, curRotations[1]);
                 rotateEachCube(obj, modelViewMatrix, curRotations[0]);
-    
+
+       
                 obj.setVertexes(this.programInfo);
     
                 // Указываем WebGL, что мы используем текстурный регистр 1
@@ -418,7 +441,7 @@ class Scene {
                 this.gl.uniform1i(this.programInfo.uniformLocations.textureBlend, textureBlend);
                 this.gl.uniform1f(this.programInfo.uniformLocations.alpha, alpha);
             });
-            curRotations[currentMode] += currentSpeed;
+            curRotations[currentMode] += currentSpeedRotation;
         }
     }  
 
@@ -537,7 +560,7 @@ function main() {
             const lines = data.split('\n');
             let splitLine = [];
             lines.forEach(function(line) {
-                console.log(line);
+                //console.log(line);
                 splitLine = line.split(' ');
                 switch(splitLine[0]) {                    
                 case 'vn':
