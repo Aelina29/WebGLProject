@@ -200,6 +200,7 @@ class Scene {
         {   
             this.objects = [
                 new Cube(true, this.gl, 2, curPositionCenter, pos,tex,pos_ind, tex_ind),
+                
                 new Cube(false, this.gl, 3, [sqCentr[0]+3, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
                 new Cube(false, this.gl, 3, [sqCentr[0]-3, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
                 new Cube(false, this.gl, 3, [sqCentr[0]+3, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
