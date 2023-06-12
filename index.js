@@ -174,7 +174,7 @@ class Scene {
         const textureMark42 = loadTexture(this.gl, imageMark42.src);
         const textureBrusch = loadTexture(this.gl, imageBrusch.src);
         const render = () => {
-            this.drawScene( [textureMark42,textureBrusch, textureBrusch, textureBrusch, textureBrusch,textureBrusch, textureBrusch, textureBrusch, textureBrusch,textureBrusch, textureBrusch, textureBrusch, textureBrusch]);
+            this.drawScene( [textureBrusch, textureBrusch, textureBrusch, textureBrusch,textureBrusch, textureBrusch, textureBrusch, textureBrusch,textureBrusch, textureBrusch, textureBrusch, textureBrusch, textureMark42, textureMark42]);
             requestAnimationFrame(render);
         }
         requestAnimationFrame(render);
@@ -197,10 +197,8 @@ class Scene {
             this.gl.clearColor(1.0, 1.0, 1.0, 1.0);
         }
         else
-        {   
+        {
             this.objects = [
-                new Cube(true, this.gl, 2, curPositionCenter, pos,tex,pos_ind, tex_ind),
-                
                 new Cube(false, this.gl, 3, [sqCentr[0]+3, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
                 new Cube(false, this.gl, 3, [sqCentr[0]-3, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
                 new Cube(false, this.gl, 3, [sqCentr[0]+3, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
@@ -215,6 +213,10 @@ class Scene {
                 new Cube(false, this.gl, 3, [sqCentr[0]-15, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
                 new Cube(false, this.gl, 3, [sqCentr[0]+15, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
                 new Cube(false, this.gl, 3, [sqCentr[0]-15, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                
+                new Cube(true, this.gl, 2, curPositionCenter, pos,tex,pos_ind, tex_ind),
+                new Cube(false, this.gl, 5, [0,0, -10], posCapShield, texCapShield, pos_indCapShield, tex_indCapShield),
+
             ]; 
             this.objects.forEach(obj => {
                 const textureMatrix = mat4.create();
@@ -341,7 +343,7 @@ function loadTexture(gl, url) {
 const imageMark42 = document.getElementById("texMark42");
 const imageBrusch = document.getElementById("texBrusch");
 
-//=================================================================================================================================
+//Square=================================================================================================================================
 SquarePositions = [
     -1.0,  1.0, -1.0,
     -1.0,  1.0,  1.0,
@@ -356,6 +358,7 @@ SquareTextureCoordinates = [
 ];        
 SquareTriangles = [0,1,2, 0,2,3,];
 
+//Mark42=================================================================================================================================
 let isLoading = true;
 let pos = [];
 let tex = [];
@@ -364,7 +367,16 @@ let pos_ind = [];
 let tex_ind = [];
 let norm_ind = [];
 
-function main() {
+//CapShield=================================================================================================================================
+let isLoadingCapShield = true;
+let posCapShield = [];
+let texCapShield = [];
+let normCapShield = [];
+let pos_indCapShield = [];
+let tex_indCapShield = [];
+let norm_indCapShield = [];
+
+function main() {//ПОЧИСТИ OBJ ОТ ДВОЙНЫХ ПРОБЕЛОВ!!
     fetch('Mark42.obj')
         .then(response => response.text())
         .then(data => {
@@ -376,13 +388,18 @@ function main() {
                 splitLine = line.split(' ');
                 switch(splitLine[0]) {                    
                 case 'vn':
-                    norm.push(splitLine[1], splitLine[2], splitLine[3]);
+                    norm.push(splitLine[1]);
+                    norm.push(splitLine[2]);
+                    norm.push(splitLine[3]);
                     break
                 case 'vt':
-                    tex.push(splitLine[1], splitLine[2]);
+                    tex.push(splitLine[1]);
+                    tex.push(splitLine[2]);
                     break
                 case 'v':
-                    pos.push(splitLine[1], splitLine[2], splitLine[3]);
+                    pos.push(splitLine[1]);
+                    pos.push(splitLine[2]);
+                    pos.push(splitLine[3]);
                     break
                 case 'f':
                     pos_ind.push(splitLine[1].split("/")[0]-1, splitLine[2].split("/")[0]-1, splitLine[3].split("/")[0]-1);
@@ -396,7 +413,40 @@ function main() {
         })
         .finally(function () {
             isLoading = false;
-            console.log("Models parsing finished");   
+            console.log("Model Mark42 parsing finished");   
+        });
+    fetch('CapShield.obj')
+        .then(response => response.text())
+        .then(data => {
+            //console.log(data);
+            const lines = data.split('\n');
+            let splitLine = [];
+            lines.forEach(function(line) {
+                //console.log(line);
+                splitLine = line.split(' ');
+                switch(splitLine[0]) {                    
+                case 'vn':
+                    normCapShield.push(splitLine[1], splitLine[2], splitLine[3]);
+                    break
+                case 'vt':
+                    texCapShield.push(splitLine[1], splitLine[2]);
+                    break
+                case 'v':
+                    posCapShield.push(splitLine[1], splitLine[2], splitLine[3]);
+                    break
+                case 'f':
+                    pos_indCapShield.push(splitLine[1].split("/")[0]-1, splitLine[2].split("/")[0]-1, splitLine[3].split("/")[0]-1);
+                    tex_indCapShield.push(splitLine[1].split("/")[1]-1, splitLine[2].split("/")[1]-1, splitLine[3].split("/")[2]-1);
+                    norm_indCapShield.push(splitLine[1].split("/")[2]-1, splitLine[2].split("/")[2]-1, splitLine[3].split("/")[2]-1);
+                    break
+                default:
+                    break
+                }
+            });
+        })
+        .finally(function () {
+            isLoadingCapShield = false;
+            console.log("Model CapShield parsing finished");   
         });
     const canvas = document.querySelector('canvas');
     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
