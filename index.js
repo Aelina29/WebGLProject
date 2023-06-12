@@ -130,7 +130,8 @@ class Cube {
     //     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.iceTextureCoordinates), gl.STATIC_DRAW);    
     // }
 
-    constructor(gl, size, color, cubePosition, pos_obj, tex_obj, pos_ind_obj, tex_ind_obj) {
+    constructor(moving, gl, size, color, cubePosition, pos_obj, tex_obj, pos_ind_obj, tex_ind_obj) {
+        this.moving = moving;
         this.gl = gl;
         this.positions = pos_obj.map((point) => point * size);
         this.position = cubePosition;
@@ -274,40 +275,39 @@ let currentSpeedRotation = 0;
 let currentSpeedX = 0;
 let currentSpeedY = 0;
 let currentSpeedZ = 0;
-let currentMode = 0;
-curRotations = [0.0, 0.0, 0.0];
-curPositionCenter = [0, -2, -10];
+curRotation = 0.0;
+curPositionCenter = [0, -3.95, -13];
 
 window.addEventListener('keydown', event => {
     if (event.key === 'ArrowLeft')              //<-, влево поворот
         currentSpeedRotation = -ROTATION_SPEED;
     else if (event.key === 'ArrowRight')        //->, вправо поворот
         currentSpeedRotation = ROTATION_SPEED;
-    else if (event.key.toLowerCase() === 'a')   //A, лево
+    else if (event.key.toLowerCase() === 'a' || event.key.toLowerCase() === 'ф')   //A Ф, лево
         currentSpeedX = -MOVE_SPEED;
-    else if (event.key.toLowerCase() === 'd')   //D, правл
+    else if (event.key.toLowerCase() === 'd' || event.key.toLowerCase() === 'в')   //D В, правл
         currentSpeedX = MOVE_SPEED;
-    else if (event.key.toLowerCase() === 's')   //S, низ
+    else if (event.key.toLowerCase() === 's' || event.key.toLowerCase() === 'ы')   //S Ы, низ
         currentSpeedY = -MOVE_SPEED;
-    else if (event.key.toLowerCase() === 'w')   //W, верх
+    else if (event.key.toLowerCase() === 'w' || event.key.toLowerCase() === 'ц')   //W Ц, верх
         currentSpeedY = MOVE_SPEED;  
     else if (event.key === 'ArrowUp')   //стрелка вверх, дальше
-        currentSpeedZ = MOVE_SPEED;
+        currentSpeedZ = -MOVE_SPEED;
     else if (event.key === 'ArrowDown')   //стрелка вниз, ближе
-        currentSpeedZ = -MOVE_SPEED;          
+        currentSpeedZ = MOVE_SPEED;          
 });
 window.addEventListener('keyup', event => {
     if (event.key === 'ArrowLeft')              //<-, влево поворот
         currentSpeedRotation = 0;
     else if (event.key === 'ArrowRight')        //->, вправо поворот
         currentSpeedRotation = 0;
-    else if (event.key.toLowerCase() === 'a')   //A, лево
+    else if (event.key.toLowerCase() === 'a' || event.key.toLowerCase() === 'ф')   //A, лево
         currentSpeedX = 0;
-    else if (event.key.toLowerCase() === 'd')   //D, правл
+    else if (event.key.toLowerCase() === 'd' || event.key.toLowerCase() === 'в')   //D, правл
         currentSpeedX = 0;
-    else if (event.key.toLowerCase() === 's')   //S, низ
+    else if (event.key.toLowerCase() === 's' || event.key.toLowerCase() === 'ы')   //S, низ
         currentSpeedY = 0;
-    else if (event.key.toLowerCase() === 'w')   //W, верх
+    else if (event.key.toLowerCase() === 'w' || event.key.toLowerCase() === 'ц')   //W, верх
         currentSpeedY = 0;  
     else if (event.key === 'ArrowUp')   //стрелка вверх, дальше
         currentSpeedZ = 0;
@@ -315,19 +315,7 @@ window.addEventListener('keyup', event => {
         currentSpeedZ = 0;  
 });
 
-[...document.querySelectorAll('input[type="radio"]')].forEach(el => el.addEventListener('change', event => {
-    if (event.target.checked) {
-        currentMode = Number(event.target.value);
-    }
-}));
-
 const rotateEachCube = (obj, Matrix, rad) => obj.rotate(Matrix, rad, [0, 1, 0]);
-const rotatePedestalAroundSelfCenter = (obj, Matrix, rad) => {
-    obj.rotateAround(Matrix, rad, [0, 0, -10]);
-}
-const rotatePedestalAroundWorldCenter = (obj, Matrix, rad) => {
-    obj.rotateAround(Matrix, rad, [0, 0, 0]);
-}
 
 //============================================================================================================
 
@@ -368,8 +356,9 @@ class Scene {
         const texture3 = loadTexture(this.gl, image3.src);
         const texture4 = loadTexture(this.gl, image4.src);
         const textureMark42 = loadTexture(this.gl, imageMark42.src);
+        const textureBrusch = loadTexture(this.gl, imageBrusch.src);
         const render = () => {
-            this.drawScene( [textureMark42, texture1, texture3, texture2, textureMark42]);
+            this.drawScene( [textureMark42, textureBrusch, textureBrusch, textureBrusch, textureBrusch,textureBrusch, textureBrusch, textureBrusch, textureBrusch,  textureMark42]);
             requestAnimationFrame(render);
         }
         requestAnimationFrame(render);
@@ -384,6 +373,10 @@ class Scene {
         const projectionMatrix = mat4.create();
         mat4.perspective(projectionMatrix, this.fieldOfView, this.aspect, this.zNear, this.zFar);
         var i = 0;
+        //
+        const sqCentr  =[0, -7, -15];
+        const sqSi = 3;
+        const sqHalf = 3;
         if(isLoading)
         {
             console.log("Loading models from obj");
@@ -393,11 +386,15 @@ class Scene {
         {                  
             //size color position of center
             this.objects = [
-                new Cube(this.gl, 3, [1.0, 0.0, 0.0, 1], [0, -2, -10],pos,tex,pos_ind, tex_ind),
-                //new Cube(this.gl, 1, [1.0, 0.0, 0.0, 1], [0, 0, -10]), // red down
-                // new Cube(this.gl, 1, [1.0, 0.0, 0.0, 1], [0, 2, -10]), // red up
-                // new Cube(this.gl, 1, [0.0, 1.0, 0.0, 1], [-2, 0, -10]), // green
-                // new Cube(this.gl, 1, [0.0, 0.0, 1.0, 1], [2, 0, -10]), // blue
+                new Cube(true, this.gl, 2, [1.0, 0.0, 0.0, 1], curPositionCenter, pos,tex,pos_ind, tex_ind),
+                new Cube(false, this.gl, sqSi, [0.0, 1.0, 0.0, 1], [sqCentr[0]+sqHalf, sqCentr[1], sqCentr[2]+sqHalf],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube(false, this.gl, sqSi, [0.0, 1.0, 0.0, 1], [sqCentr[0]-sqHalf, sqCentr[1], sqCentr[2]+sqHalf],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube(false, this.gl, sqSi, [0.0, 1.0, 0.0, 1], [sqCentr[0]+sqHalf, sqCentr[1], sqCentr[2]-sqHalf],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube(false, this.gl, sqSi, [0.0, 1.0, 0.0, 1], [sqCentr[0]-sqHalf, sqCentr[1], sqCentr[2]-sqHalf],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube(false, this.gl, sqSi, [0.0, 1.0, 0.0, 1], [sqCentr[0]+2*sqHalf, sqCentr[1], sqCentr[2]+sqHalf],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube(false, this.gl, sqSi, [0.0, 1.0, 0.0, 1], [sqCentr[0]-2*sqHalf, sqCentr[1], sqCentr[2]+sqHalf],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube(false, this.gl, sqSi, [0.0, 1.0, 0.0, 1], [sqCentr[0]+9, sqCentr[1], sqCentr[2]-sqHalf],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube(false, this.gl, sqSi, [0.0, 1.0, 0.0, 1], [sqCentr[0]-9, sqCentr[1], sqCentr[2]-sqHalf],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
             ]; 
             this.objects.forEach(obj => {
                 const textureMatrix = mat4.create();
@@ -409,13 +406,17 @@ class Scene {
                 var modelViewMatrix = mat4.create();
                 
                 //движение
-                curPositionCenter = [curPositionCenter[0]+currentSpeedX, curPositionCenter[1]+currentSpeedY, curPositionCenter[2]+currentSpeedZ];
-                obj.position = curPositionCenter;
-                //console.log(obj.position);
+                if(obj.moving){
+                    if(curPositionCenter[1]<=-3.95 && currentSpeedY<0) currentSpeedY = 0;
+                    curPositionCenter = [curPositionCenter[0]+currentSpeedX, curPositionCenter[1]+currentSpeedY, curPositionCenter[2]+currentSpeedZ];
+                    obj.position = curPositionCenter;
+                    console.log(obj.position);
+                }
                 obj.toPosition(modelViewMatrix);
-                rotatePedestalAroundWorldCenter(obj, modelViewMatrix, curRotations[2]);
-                rotatePedestalAroundSelfCenter(obj, modelViewMatrix, curRotations[1]);
-                rotateEachCube(obj, modelViewMatrix, curRotations[0]);
+                if(obj.moving){
+                    rotateEachCube(obj, modelViewMatrix, curRotation);
+                }
+                
 
        
                 obj.setVertexes(this.programInfo);
@@ -441,7 +442,7 @@ class Scene {
                 this.gl.uniform1i(this.programInfo.uniformLocations.textureBlend, textureBlend);
                 this.gl.uniform1f(this.programInfo.uniformLocations.alpha, alpha);
             });
-            curRotations[currentMode] += currentSpeedRotation;
+            curRotation += currentSpeedRotation;
         }
     }  
 
@@ -541,8 +542,81 @@ const image2 = document.getElementById("tex2");
 const image3 = document.getElementById("tex3");
 const image4 = document.getElementById("tex4");
 const imageMark42 = document.getElementById("texMark42");
+const imageBrusch = document.getElementById("texBrusch");
 
 //=================================================================================================================================
+SquarePositions = [
+    // Front face
+    -1.0, -1.0,  1.0,
+    1.0, -1.0,  1.0,
+    1.0,  1.0,  1.0,
+    -1.0,  1.0,  1.0,
+    // Back face
+    -1.0, -1.0, -1.0,
+    -1.0,  1.0, -1.0,
+    1.0,  1.0, -1.0,
+    1.0, -1.0, -1.0,
+    // Top face
+    -1.0,  1.0, -1.0,
+    -1.0,  1.0,  1.0,
+    1.0,  1.0,  1.0,
+    1.0,  1.0, -1.0,
+    // Bottom face
+    -1.0, -1.0, -1.0,
+    1.0, -1.0, -1.0,
+    1.0, -1.0,  1.0,
+    -1.0, -1.0,  1.0,
+    // Right face
+    1.0, -1.0, -1.0,
+    1.0,  1.0, -1.0,
+    1.0,  1.0,  1.0,
+    1.0, -1.0,  1.0,
+    // Left face
+    -1.0, -1.0, -1.0,
+    -1.0, -1.0,  1.0,
+    -1.0,  1.0,  1.0,
+    -1.0,  1.0, -1.0,
+];
+SquareTextureCoordinates = [
+    // Front
+    0.0, 0.0,
+    1.0, 0.0,
+    1.0, 1.0,
+    0.0, 1.0,
+    // Back
+    1.0, 0.0,
+    1.0, 1.0,
+    0.0, 1.0,
+    0.0, 0.0,
+    // Top
+    0.0, 1.0,
+    0.0, 0.0,
+    1.0, 0.0,
+    1.0, 1.0,
+    // Bottom
+    1.0, 1.0,
+    0.0, 1.0,
+    0.0, 0.0,
+    1.0, 0.0,
+    // Right
+    1.0, 0.0,
+    1.0, 1.0,
+    0.0, 1.0,
+    0.0, 0.0,
+    // Left
+    0.0, 0.0,
+    1.0, 0.0,
+    1.0, 1.0,
+    0.0, 1.0,
+];        
+SquareTriangles = [
+    0,  1,  2,      0,  2,  3,    // front
+    4,  5,  6,      4,  6,  7,    // back
+    8,  9,  10,     8,  10, 11,   // top
+    12, 13, 14,     12, 14, 15,   // bottom
+    16, 17, 18,     16, 18, 19,   // right
+    20, 21, 22,     20, 22, 23,     // left
+];
 
 let isLoading = true;
 let pos = [];
