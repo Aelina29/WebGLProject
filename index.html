@@ -10,11 +10,6 @@
     <script src="index.js" defer></script>
     <style>
         body {
-            /* display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-family: sans-serif; */
-
             display: flex;
             flex-wrap: wrap;
             align-content: flex-start;
@@ -27,94 +22,9 @@
     </style>
 </head>
 <body>
-    <!-- <input type="file", id = "myFile" onchange="showFile(this)"> -->
-
-    <script>
-    // function showFile(input) {
-    //     let file = new File([],"cube.obj")//input.files[0];
-    //     //alert(`File name: ${file.name}`);
-        
-    //     const reader = new FileReader();
-    //     const lines = [];
-    //     let pos = [];
-    //     let tex = [];
-    //     let ind = [];
-
-        // global = 7;      
-        // console.log("script",global);
-
-        // fetch('cube.obj')
-        // .then(response => response.text())
-        // .then(data => {
-        //     console.log(data);
-        //     global = 9;
-        //     console.log("fetch", global);
-        // })
-        // .finally(function () {
-        //     isLoading = false;
-        //     main();
-        // });
-        
-
-    //     console.log("1");
-    //     reader.onload = function(event) {
-    //         const text = event.target.result;
-    //         const splitText = text.split('\n');
-    //         splitText.forEach(function(line) {
-    //             global++;
-    //             console.log(global);
-    //             console.log(line);
-    //             //
-    //             let splitLine = line.split(' ');
-    //             switch(splitLine[0]) {
-    //             case 'vt':
-    //                 pos.push(splitLine[1], splitLine[2]);
-    //                 console.log(splitLine[1], splitLine[2]);
-    //                 break
-    //             case 'v':
-    //                 pos.push(splitLine[1], splitLine[2], splitLine[3]);
-    //                 console.log(splitLine[1], splitLine[2], splitLine[3]);
-    //                 break
-    //             case 'f':
-                    
-    //                 break
-    //             default:
-    //                 break
-    //             }
-    //             //
-    //             lines.push(line);
-    //         });
-    //     };
-
-        // console.log("2");
-        
-        // console.log(global);
-        
-        // reader.readAsText(file);
-        // for (let i = 0; i< lines.length; i++ ) {
-        //     console.log(lines[i]);
-        // }        
-        
-        // console.log(global);
-        // console.log("3");
-
-        // fetch('cube.obj')
-        //     .then(response => response.text())
-        //     .then(data => {
-        //         // обработка данных файла
-        //         console.log(data);
-        //     });
-
-    //}
-    </script>
-    <canvas id="canvas" width="800" height="600"></canvas>
-    <div><button class="btn" id="add-color" height="30"> Смешать текстуры номеров с цветом кубиков</button></div>
-    <div><button class="btn" id="add-material" height="30"> Смешать 2 текстуры</button></div>
+    <!-- <canvas id="canvas" width="800" height="600"></canvas> -->
+    <canvas id="canvas" width="1500" height="660"></canvas>
     <div class="textures">
-        <img src="1.jpg" id="tex1" wigth="0" height="0">
-        <img src="2.jpg" id="tex2" wigth="0" height="0">
-        <img src="3.jpg" id="tex3" wigth="0" height="0">
-        <img src="44.jpg" id="tex4" wigth="0" height="0">
         <img src="Mark42.jpg" id="texMark42" wigth="0" height="0">
         <img src="brusch.jpg" id="texBrusch" wigth="0" height="0">
     </div>
