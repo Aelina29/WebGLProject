@@ -19,12 +19,6 @@ class Cube {
         this.numTextureCoordBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.numTextureCoordBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.numTextureCoordinates), gl.STATIC_DRAW);
-
-        // this.faceColors = new Array(pos_ind_obj.length).fill(color);
-        // this.colors = this.faceColors.flatMap(color => [...color, ...color, ...color, ...color]);
-        // this.colorBuffer = this.gl.createBuffer();
-        // this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer);
-        // this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.colors), this.gl.STATIC_DRAW);
     }
 
     getBuffers() {
@@ -41,10 +35,6 @@ class Cube {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
         gl.vertexAttribPointer(programInfo.attribLocations.vertexPosition,3, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
-        
-        //gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer);
-        //gl.vertexAttribPointer(programInfo.attribLocations.vertexColor,4, gl.FLOAT, false, 0, 0);
-        //gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor);
         
         gl.bindBuffer(this.gl.ARRAY_BUFFER, this.numTextureCoordBuffer);
         gl.vertexAttribPointer(programInfo.attribLocations.numTextureCoord, 2, gl.FLOAT, false, 0, 0);
@@ -94,16 +84,6 @@ uniform sampler2D uSampler1;
 uniform sampler2D uSampler2;
 uniform float uAlpha;
 varying highp vec2 vNumTextureCoord;
-void main(void) {
-    gl_FragColor = texture2D(uSampler1, vNumTextureCoord);
-}`
-
-var cubeRedFragmentShader = `
-precision highp float;
-uniform sampler2D uSampler1;
-uniform sampler2D uSampler2;
-uniform float uAlpha;
-varying highp vec2 vNumTextureCoord;
 uniform lowp int uColorBlend;
 uniform lowp int uTargetCube;
 void main(void) {
@@ -112,10 +92,6 @@ void main(void) {
         gl_FragColor = vec4(gl_FragColor.rgb * vec3(1.0, 0.0, 0.0), 1.0);
     }
 }`
-//gl_FragColor = vec4(gl_FragColor.rgb * vec3(1.0, 0.0, 0.0), 1.0);
-//gl_FragColor = vec4(gl_FragColor.rgb * vColor.rgb, vColor.a);
-// gl_FragColor = vec4(gl_FragColor.r*vColor[0], gl_FragColor.g*vColor[2],gl_FragColor.b*vColor[2], 1.0);
-//
 
 //============================================================================================================
 
@@ -168,15 +144,14 @@ const rotateEachCube = (obj, Matrix, rad) => obj.rotate(Matrix, rad, [0, 1, 0]);
 //============================================================================================================
 
 class Scene {
-    constructor(webgl_context, vertex_shader, fragment_shader, red_fragment_shader) {
+    constructor(webgl_context, vertex_shader, fragment_shader) {
         this.gl = webgl_context;
-        const shaderProgram = this.initShadersProgram(vertex_shader, red_fragment_shader);
+        const shaderProgram = this.initShadersProgram(vertex_shader, fragment_shader);
         this.programInfo = {
             program: shaderProgram,
             attribLocations: {
                 vertexPosition: this.gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
                 numTextureCoord: this.gl.getAttribLocation(shaderProgram, 'aNumTextureCoord'),
-                //vertexColor: this.gl.getAttribLocation(shaderProgram, 'aVertexColor'),
             },
             uniformLocations: {
                 projectionMatrix: this.gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
@@ -352,13 +327,10 @@ function check_intersection()
         //alert("intersection");
         //intersection++;
         //console.log(intersection);
-        //scaleAlienAnimal -= 0.01;
         colorBlend = 1;
-        //curPositionCenterMark42 = [curPositionCenterMark42[0]-del,curPositionCenterMark42[1],curPositionCenterMark42[2]];
     }        
     else
     {
-        //scaleAlienAnimal -= 0.01;
         colorBlend = 0;
     }
 }
@@ -579,6 +551,6 @@ function main() {//ПОЧИСТИ OBJ ОТ ДВОЙНЫХ ПРОБЕЛОВ!!
         alert('Unable to initialize WebGL. Your browser or machine may not support it.');
         return;
     }
-    let sc = new Scene(gl, cubeVertexShader, cubeFragmentShader, cubeRedFragmentShader).start();
+    let sc = new Scene(gl, cubeVertexShader, cubeFragmentShader).start();
 }
 main();
