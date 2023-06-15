@@ -1,5 +1,5 @@
 class Cube {
-    constructor(moving, gl, size, cubePosition, pos_obj, tex_obj, pos_ind_obj, tex_ind_obj) {
+    constructor(color, moving, gl, size, cubePosition, pos_obj, tex_obj, pos_ind_obj, tex_ind_obj) {
         this.moving = moving;
         this.gl = gl;
         this.positions = pos_obj.map((point) => point * size);
@@ -19,11 +19,18 @@ class Cube {
         this.numTextureCoordBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.numTextureCoordBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.numTextureCoordinates), gl.STATIC_DRAW);
+
+        // this.faceColors = new Array(pos_ind_obj.length).fill(color);
+        // this.colors = this.faceColors.flatMap(color => [...color, ...color, ...color, ...color]);
+        // this.colorBuffer = this.gl.createBuffer();
+        // this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer);
+        // this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.colors), this.gl.STATIC_DRAW);
     }
 
     getBuffers() {
         return {
             position: this.positionBuffer,
+            //color: this.colorBuffer,
             indices: this.triangleBuffer,
             raw_indices: this.triangles,
         };
@@ -34,6 +41,10 @@ class Cube {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
         gl.vertexAttribPointer(programInfo.attribLocations.vertexPosition,3, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
+        
+        //gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer);
+        //gl.vertexAttribPointer(programInfo.attribLocations.vertexColor,4, gl.FLOAT, false, 0, 0);
+        //gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor);
         
         gl.bindBuffer(this.gl.ARRAY_BUFFER, this.numTextureCoordBuffer);
         gl.vertexAttribPointer(programInfo.attribLocations.numTextureCoord, 2, gl.FLOAT, false, 0, 0);
@@ -87,6 +98,25 @@ void main(void) {
     gl_FragColor = texture2D(uSampler1, vNumTextureCoord);
 }`
 
+var cubeRedFragmentShader = `
+precision highp float;
+uniform sampler2D uSampler1;
+uniform sampler2D uSampler2;
+uniform float uAlpha;
+varying highp vec2 vNumTextureCoord;
+uniform lowp int uColorBlend;
+uniform lowp int uTargetCube;
+void main(void) {
+    gl_FragColor = texture2D(uSampler1, vNumTextureCoord);
+    if (uColorBlend == 1 && uTargetCube == 1) {
+        gl_FragColor = vec4(gl_FragColor.rgb * vec3(1.0, 0.0, 0.0), 1.0);
+    }
+}`
+//gl_FragColor = vec4(gl_FragColor.rgb * vec3(1.0, 0.0, 0.0), 1.0);
+//gl_FragColor = vec4(gl_FragColor.rgb * vColor.rgb, vColor.a);
+// gl_FragColor = vec4(gl_FragColor.r*vColor[0], gl_FragColor.g*vColor[2],gl_FragColor.b*vColor[2], 1.0);
+//
+
 //============================================================================================================
 
 const ROTATION_SPEED = 0.015;
@@ -95,8 +125,6 @@ let currentSpeedRotation = 0;
 let currentSpeedX = 0;
 let currentSpeedY = 0;
 let currentSpeedZ = 0;
-curRotation = 0.0;
-curPositionCenter = [0, -3.95, -13];
 
 window.addEventListener('keydown', event => {
     if (event.key === 'ArrowLeft')              //<-, влево поворот
@@ -140,14 +168,15 @@ const rotateEachCube = (obj, Matrix, rad) => obj.rotate(Matrix, rad, [0, 1, 0]);
 //============================================================================================================
 
 class Scene {
-    constructor(webgl_context, vertex_shader, fragment_shader) {
+    constructor(webgl_context, vertex_shader, fragment_shader, red_fragment_shader) {
         this.gl = webgl_context;
-        const shaderProgram = this.initShadersProgram(vertex_shader, fragment_shader);
+        const shaderProgram = this.initShadersProgram(vertex_shader, red_fragment_shader);
         this.programInfo = {
             program: shaderProgram,
             attribLocations: {
                 vertexPosition: this.gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
                 numTextureCoord: this.gl.getAttribLocation(shaderProgram, 'aNumTextureCoord'),
+                //vertexColor: this.gl.getAttribLocation(shaderProgram, 'aVertexColor'),
             },
             uniformLocations: {
                 projectionMatrix: this.gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
@@ -155,7 +184,9 @@ class Scene {
                 sampler1: this.gl.getUniformLocation(shaderProgram, 'uSampler1'),
                 sampler2: this.gl.getUniformLocation(shaderProgram, 'uSampler2'),    
                 textureMatrix: this.gl.getUniformLocation(shaderProgram, 'uTextureMatrix'),
-                alpha: this.gl.getUniformLocation(shaderProgram, 'uAlpha'),
+                alpha: this.gl.getUniformLocation(shaderProgram, 'uAlpha'),                
+                colorBlend: this.gl.getUniformLocation(shaderProgram, 'uColorBlend'),
+                TargetCube: this.gl.getUniformLocation(shaderProgram, 'uTargetCube'),
             }
         }
         this.objects = [];
@@ -170,6 +201,7 @@ class Scene {
         const textureBrusch = loadTexture(this.gl, imageBrusch.src);
         const textureKatarina = loadTexture(this.gl, imageKatarina.src);
         const textureCatOrange = loadTexture(this.gl, imageCatOrange.src);
+        const textureGradient = loadTexture(this.gl, imageGradient.src);
         const render = () => {
             this.drawScene( [textureBrusch, textureBrusch, textureBrusch, textureBrusch,textureBrusch, textureBrusch, textureBrusch, textureBrusch,textureBrusch, textureBrusch, textureBrusch, textureBrusch, textureMark42, textureKatarina, textureCatOrange]);
             requestAnimationFrame(render);
@@ -196,24 +228,24 @@ class Scene {
         else
         {
             this.objects = [
-                new Cube(false, this.gl, 3, [sqCentr[0]+3, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
-                new Cube(false, this.gl, 3, [sqCentr[0]-3, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
-                new Cube(false, this.gl, 3, [sqCentr[0]+3, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
-                new Cube(false, this.gl, 3, [sqCentr[0]-3, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]+3, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]-3, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]+3, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]-3, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
 
-                new Cube(false, this.gl, 3, [sqCentr[0]+9, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
-                new Cube(false, this.gl, 3, [sqCentr[0]-9, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
-                new Cube(false, this.gl, 3, [sqCentr[0]+9, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
-                new Cube(false, this.gl, 3, [sqCentr[0]-9, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]+9, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]-9, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]+9, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]-9, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
 
-                new Cube(false, this.gl, 3, [sqCentr[0]+15, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
-                new Cube(false, this.gl, 3, [sqCentr[0]-15, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
-                new Cube(false, this.gl, 3, [sqCentr[0]+15, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
-                new Cube(false, this.gl, 3, [sqCentr[0]-15, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]+15, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]-15, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]+15, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]-15, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
                 
-                new Cube(true, this.gl, 2, curPositionCenter, pos,tex,pos_ind, tex_ind), //curPositionCenter = [0, -3.95, -13]; //true
-                new Cube(false, this.gl, 0.6, [-5, -3.95, -13], posCapShield, texCapShield, pos_indCapShield, tex_indCapShield),
-                new Cube(false, this.gl, 0.25, [5, -3.95, -13], posAlienAnimal, texAlienAnimal, pos_indAlienAnimal, tex_indAlienAnimal),
+                new Cube([1.0, 1.0, 1.0, 1], true, this.gl, 2, curPositionCenterMark42, pos,tex,pos_ind, tex_ind),//true
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 0.6, curPositionCenterKatarina, posCapShield, texCapShield, pos_indCapShield, tex_indCapShield),
+                new Cube([1.0, 0.0, 0.0, 1], false, this.gl, scaleAlienAnimal, curPositionCenterAlienAnimal, posAlienAnimal, texAlienAnimal, pos_indAlienAnimal, tex_indAlienAnimal),
 
             ]; 
             this.objects.forEach(obj => {
@@ -227,9 +259,9 @@ class Scene {
                 
                 //движение
                 if(obj.moving){
-                    if(curPositionCenter[1]<=-3.95 && currentSpeedY<0) currentSpeedY = 0;
-                    curPositionCenter = [curPositionCenter[0]+currentSpeedX, curPositionCenter[1]+currentSpeedY, curPositionCenter[2]+currentSpeedZ];
-                    obj.position = curPositionCenter;
+                    if(curPositionCenterMark42[1]<=-3.95 && currentSpeedY<0) currentSpeedY = 0;
+                    curPositionCenterMark42 = [curPositionCenterMark42[0]+currentSpeedX, curPositionCenterMark42[1]+currentSpeedY, curPositionCenterMark42[2]+currentSpeedZ];
+                    obj.position = curPositionCenterMark42;
                     //console.log(obj.position);
                 }
                 obj.toPosition(modelViewMatrix);
@@ -247,11 +279,16 @@ class Scene {
                 this.gl.bindTexture(this.gl.TEXTURE_2D, textures[4]);
                 this.gl.activeTexture(this.gl.TEXTURE0);
                 this.gl.bindTexture(this.gl.TEXTURE_2D, textures[i]);
-                i++;
     
                 const buffers = obj.getBuffers();
                 this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
+                if(i == this.objects.length-2)
+                    TargetCube = 1;
+                else
+                    TargetCube = 0;
+
                 this.gl.useProgram(this.programInfo.program);
+
                 this.gl.uniformMatrix4fv(this.programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
                 this.gl.uniformMatrix4fv(this.programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
                 this.gl.uniformMatrix4fv(this.programInfo.uniformLocations.textureMatrix, false, textureMatrix);
@@ -259,8 +296,13 @@ class Scene {
                 this.gl.uniform1i(this.programInfo.uniformLocations.sampler1, 0);
                 this.gl.uniform1i(this.programInfo.uniformLocations.sampler2, 1);
                 this.gl.uniform1f(this.programInfo.uniformLocations.alpha, alpha);
+                this.gl.uniform1i(this.programInfo.uniformLocations.colorBlend, colorBlend);
+                this.gl.uniform1i(this.programInfo.uniformLocations.TargetCube, TargetCube);                
+                
+                i++;
             });
             curRotation += currentSpeedRotation;
+            check_intersection();
         }
     }  
 
@@ -288,6 +330,36 @@ class Scene {
             return null;
         }
         return shader;
+    }
+}
+
+//=========================================================================================================================
+curRotation = 0.0;
+curPositionCenterMark42 = [0, -3.95, -13];
+curPositionCenterKatarina = [-5, -3.95, -13];
+curPositionCenterAlienAnimal = [5, -3.95, -13];
+scaleAlienAnimal  = 0.25;
+intersection = 0;
+let colorBlend = 0;
+let TargetCube = 0;
+function check_intersection()
+{
+    let distance = Math.sqrt(Math.pow(curPositionCenterAlienAnimal[0]-curPositionCenterMark42[0],2)+Math.pow(curPositionCenterAlienAnimal[1]-curPositionCenterMark42[1],2)+Math.pow(curPositionCenterAlienAnimal[2]-curPositionCenterMark42[2],2));
+    //console.log(distance);
+    let del = 0.1;
+    if(distance <= 3.75)//2.9410882339705524) 4.589662296945164
+    {
+        //alert("intersection");
+        //intersection++;
+        //console.log(intersection);
+        //scaleAlienAnimal -= 0.01;
+        colorBlend = 1;
+        //curPositionCenterMark42 = [curPositionCenterMark42[0]-del,curPositionCenterMark42[1],curPositionCenterMark42[2]];
+    }        
+    else
+    {
+        //scaleAlienAnimal -= 0.01;
+        colorBlend = 0;
     }
 }
 
@@ -342,6 +414,7 @@ const imageMark42 = document.getElementById("texMark42");
 const imageBrusch = document.getElementById("texBrusch");
 const imageKatarina = document.getElementById("texKatarina");
 const imageCatOrange = document.getElementById("texCatOrange");
+const imageGradient = document.getElementById("texGradient");
 
 //Square=================================================================================================================================
 SquarePositions = [
@@ -506,6 +579,6 @@ function main() {//ПОЧИСТИ OBJ ОТ ДВОЙНЫХ ПРОБЕЛОВ!!
         alert('Unable to initialize WebGL. Your browser or machine may not support it.');
         return;
     }
-    let sc = new Scene(gl, cubeVertexShader, cubeFragmentShader).start();
+    let sc = new Scene(gl, cubeVertexShader, cubeFragmentShader, cubeRedFragmentShader).start();
 }
 main();
