@@ -36,13 +36,7 @@ class Cube {
         gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
         
         gl.bindBuffer(this.gl.ARRAY_BUFFER, this.numTextureCoordBuffer);
-        gl.vertexAttribPointer(
-            programInfo.attribLocations.numTextureCoord,
-            2,
-            gl.FLOAT,
-            false,//false in prezent
-            0,
-            0);
+        gl.vertexAttribPointer(programInfo.attribLocations.numTextureCoord, 2, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(programInfo.attribLocations.numTextureCoord);
     }
 
@@ -79,7 +73,8 @@ varying highp vec2 vNumTextureCoord;
 uniform mat4 uTextureMatrix;
 void main(void) {
     gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-    vNumTextureCoord = ((uTextureMatrix) * vec4(aNumTextureCoord, 0.0 , 1.0)).xy;
+    //vNumTextureCoord = ((uTextureMatrix) * vec4(aNumTextureCoord, 0.0 , 1.0)).xy;
+    vNumTextureCoord = aNumTextureCoord;
 }`
 
 var cubeFragmentShader = `
@@ -173,8 +168,10 @@ class Scene {
     start() {
         const textureMark42 = loadTexture(this.gl, imageMark42.src);
         const textureBrusch = loadTexture(this.gl, imageBrusch.src);
+        const textureKatarina = loadTexture(this.gl, imageKatarina.src);
+        const textureCatOrange = loadTexture(this.gl, imageCatOrange.src);
         const render = () => {
-            this.drawScene( [textureBrusch, textureBrusch, textureBrusch, textureBrusch,textureBrusch, textureBrusch, textureBrusch, textureBrusch,textureBrusch, textureBrusch, textureBrusch, textureBrusch, textureMark42, textureMark42]);
+            this.drawScene( [textureBrusch, textureBrusch, textureBrusch, textureBrusch,textureBrusch, textureBrusch, textureBrusch, textureBrusch,textureBrusch, textureBrusch, textureBrusch, textureBrusch, textureMark42, textureKatarina, textureCatOrange]);
             requestAnimationFrame(render);
         }
         requestAnimationFrame(render);
@@ -191,7 +188,7 @@ class Scene {
         var i = 0;
         //
         const sqCentr  =[0, -7, -15];
-        if(isLoading)
+        if(isLoading)// && isLoadingAlienAnimal && isLoadingCapShield)
         {
             console.log("Loading models from obj");
             this.gl.clearColor(1.0, 1.0, 1.0, 1.0);
@@ -214,8 +211,9 @@ class Scene {
                 new Cube(false, this.gl, 3, [sqCentr[0]+15, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
                 new Cube(false, this.gl, 3, [sqCentr[0]-15, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
                 
-                new Cube(true, this.gl, 2, curPositionCenter, pos,tex,pos_ind, tex_ind),
-                new Cube(false, this.gl, 5, [0,0, -10], posCapShield, texCapShield, pos_indCapShield, tex_indCapShield),
+                new Cube(true, this.gl, 2, curPositionCenter, pos,tex,pos_ind, tex_ind), //curPositionCenter = [0, -3.95, -13]; //true
+                new Cube(false, this.gl, 0.6, [-5, -3.95, -13], posCapShield, texCapShield, pos_indCapShield, tex_indCapShield),
+                new Cube(false, this.gl, 0.25, [5, -3.95, -13], posAlienAnimal, texAlienAnimal, pos_indAlienAnimal, tex_indAlienAnimal),
 
             ]; 
             this.objects.forEach(obj => {
@@ -342,6 +340,8 @@ function loadTexture(gl, url) {
 
 const imageMark42 = document.getElementById("texMark42");
 const imageBrusch = document.getElementById("texBrusch");
+const imageKatarina = document.getElementById("texKatarina");
+const imageCatOrange = document.getElementById("texCatOrange");
 
 //Square=================================================================================================================================
 SquarePositions = [
@@ -376,35 +376,44 @@ let pos_indCapShield = [];
 let tex_indCapShield = [];
 let norm_indCapShield = [];
 
+//AlienAnimal=================================================================================================================================
+let isLoadingAlienAnimal = true;
+let posAlienAnimal = [];
+let texAlienAnimal = [];
+let normAlienAnimal = [];
+let pos_indAlienAnimal= [];
+let tex_indAlienAnimal = [];
+let norm_indAlienAnimal = [];
+
 function main() {//ПОЧИСТИ OBJ ОТ ДВОЙНЫХ ПРОБЕЛОВ!!
-    fetch('Mark42.obj')
+    fetch('./obj_models/Mark42.obj')
         .then(response => response.text())
         .then(data => {
             //console.log(data);
-            const lines = data.split('\n');
+            const lines = data.split('\n').join('\r').split('\r');
             let splitLine = [];
             lines.forEach(function(line) {
                 //console.log(line);
                 splitLine = line.split(' ');
                 switch(splitLine[0]) {                    
                 case 'vn':
-                    norm.push(splitLine[1]);
-                    norm.push(splitLine[2]);
-                    norm.push(splitLine[3]);
+                    norm.push(parseFloat(splitLine[1]));
+                    norm.push(parseFloat(splitLine[2]));
+                    norm.push(parseFloat(splitLine[3]));
                     break
                 case 'vt':
-                    tex.push(splitLine[1]);
-                    tex.push(splitLine[2]);
+                    tex.push(parseFloat(splitLine[1]));
+                    tex.push(parseFloat(splitLine[2]));
                     break
                 case 'v':
-                    pos.push(splitLine[1]);
-                    pos.push(splitLine[2]);
-                    pos.push(splitLine[3]);
+                    pos.push(parseFloat(splitLine[1]));
+                    pos.push(parseFloat(splitLine[2]));
+                    pos.push(parseFloat(splitLine[3]));
                     break
                 case 'f':
-                    pos_ind.push(splitLine[1].split("/")[0]-1, splitLine[2].split("/")[0]-1, splitLine[3].split("/")[0]-1);
-                    tex_ind.push(splitLine[1].split("/")[1]-1, splitLine[2].split("/")[1]-1, splitLine[3].split("/")[2]-1);
-                    norm_ind.push(splitLine[1].split("/")[2]-1, splitLine[2].split("/")[2]-1, splitLine[3].split("/")[2]-1);
+                    pos_ind.push(parseFloat(splitLine[1].split("/")[0])-1, parseFloat(splitLine[2].split("/")[0])-1, parseFloat(splitLine[3].split("/")[0]-1));
+                    tex_ind.push(parseFloat(splitLine[1].split("/")[1])-1, parseFloat(splitLine[2].split("/")[1])-1, parseFloat(splitLine[3].split("/")[2]-1));
+                    norm_ind.push(parseFloat(splitLine[1].split("/")[2])-1, parseFloat(splitLine[2].split("/")[2])-1, parseFloat(splitLine[3].split("/")[2]-1));
                     break
                 default:
                     break
@@ -415,38 +424,81 @@ function main() {//ПОЧИСТИ OBJ ОТ ДВОЙНЫХ ПРОБЕЛОВ!!
             isLoading = false;
             console.log("Model Mark42 parsing finished");   
         });
-    fetch('CapShield.obj')
+    fetch('./obj_models/Katarina.obj') //Mjolnir //CapShield
         .then(response => response.text())
         .then(data => {
             //console.log(data);
-            const lines = data.split('\n');
+            const lines = data.split('\n').join('\r').split('\r');
             let splitLine = [];
             lines.forEach(function(line) {
                 //console.log(line);
                 splitLine = line.split(' ');
                 switch(splitLine[0]) {                    
-                case 'vn':
-                    normCapShield.push(splitLine[1], splitLine[2], splitLine[3]);
-                    break
-                case 'vt':
-                    texCapShield.push(splitLine[1], splitLine[2]);
-                    break
-                case 'v':
-                    posCapShield.push(splitLine[1], splitLine[2], splitLine[3]);
-                    break
-                case 'f':
-                    pos_indCapShield.push(splitLine[1].split("/")[0]-1, splitLine[2].split("/")[0]-1, splitLine[3].split("/")[0]-1);
-                    tex_indCapShield.push(splitLine[1].split("/")[1]-1, splitLine[2].split("/")[1]-1, splitLine[3].split("/")[2]-1);
-                    norm_indCapShield.push(splitLine[1].split("/")[2]-1, splitLine[2].split("/")[2]-1, splitLine[3].split("/")[2]-1);
-                    break
-                default:
-                    break
-                }
+                    case 'vn':
+                        normCapShield.push(parseFloat(splitLine[1]));
+                        normCapShield.push(parseFloat(splitLine[2]));
+                        normCapShield.push(parseFloat(splitLine[3]));//их нет(
+                        break
+                    case 'vt':
+                        texCapShield.push(parseFloat(splitLine[1]));
+                        texCapShield.push(parseFloat(splitLine[2]));
+                        break
+                    case 'v':
+                        posCapShield.push(parseFloat(splitLine[1]));
+                        posCapShield.push(parseFloat(splitLine[2]));
+                        posCapShield.push(parseFloat(splitLine[3]));
+                        break
+                    case 'f':
+                        pos_indCapShield.push(parseFloat(splitLine[1].split("/")[0])-1, parseFloat(splitLine[2].split("/")[0])-1, parseFloat(splitLine[3].split("/")[0]-1));
+                        tex_indCapShield.push(parseFloat(splitLine[1].split("/")[1])-1, parseFloat(splitLine[2].split("/")[1])-1, parseFloat(splitLine[3].split("/")[2]-1));
+                        norm_indCapShield.push(parseFloat(splitLine[1].split("/")[2])-1, parseFloat(splitLine[2].split("/")[2])-1, parseFloat(splitLine[3].split("/")[2]-1));
+                        break
+                    default:
+                        break
+                    }
             });
         })
         .finally(function () {
             isLoadingCapShield = false;
             console.log("Model CapShield parsing finished");   
+        });
+    fetch('./obj_models/AlienAnimal.obj')
+        .then(response => response.text())
+        .then(data => {
+            //console.log(data);
+            const lines = data.split('\n').join('\r').split('\r');
+            let splitLine = [];
+            lines.forEach(function(line) {
+                //console.log(line);
+                splitLine = line.split(' ');
+                switch(splitLine[0]) {                    
+                    case 'vn':
+                        normAlienAnimal.push(parseFloat(splitLine[1]));
+                        normAlienAnimal.push(parseFloat(splitLine[2]));
+                        normAlienAnimal.push(parseFloat(splitLine[3]));//их нет(
+                        break
+                    case 'vt':
+                        texAlienAnimal.push(parseFloat(splitLine[1]));
+                        texAlienAnimal.push(parseFloat(splitLine[2]));
+                        break
+                    case 'v':
+                        posAlienAnimal.push(parseFloat(splitLine[1]));
+                        posAlienAnimal.push(parseFloat(splitLine[2]));
+                        posAlienAnimal.push(parseFloat(splitLine[3]));
+                        break
+                    case 'f':
+                        pos_indAlienAnimal.push(parseFloat(splitLine[1].split("/")[0])-1, parseFloat(splitLine[2].split("/")[0])-1, parseFloat(splitLine[3].split("/")[0]-1));
+                        tex_indAlienAnimal.push(parseFloat(splitLine[1].split("/")[1])-1, parseFloat(splitLine[2].split("/")[1])-1, parseFloat(splitLine[3].split("/")[2]-1));
+                        norm_indAlienAnimal.push(parseFloat(splitLine[1].split("/")[2])-1, parseFloat(splitLine[2].split("/")[2])-1, parseFloat(splitLine[3].split("/")[2]-1));
+                        break
+                    default:
+                        break
+                    }
+            });
+        })
+        .finally(function () {
+            isLoadingAlienAnimal = false;
+            console.log("Model AlienAnimal parsing finished");   
         });
     const canvas = document.querySelector('canvas');
     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
