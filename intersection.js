@@ -1,67 +1,30 @@
 class Cube {
-    // constructor(color, moving, gl, size, cubePosition, pos_obj, tex_obj, pos_ind_obj, tex_ind_obj) {
-    //     this.moving = moving;
-    //     this.gl = gl;
-    //     this.positions = pos_obj.map((point) => point * size);
-
-    //     this.position = cubePosition;
-    //     this.positionBuffer = this.gl.createBuffer();
-    //     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
-    //     this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.positions), this.gl.STATIC_DRAW);
-
-
-    //     this.triangles = pos_ind_obj;
-    //     this.triangleBuffer = this.gl.createBuffer();
-    //     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.triangleBuffer);
-    //     this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.triangles), this.gl.STATIC_DRAW);
-	
-    //     this.numTextureCoordinates = tex_obj;
-    //     this.numTextureCoordBuffer = gl.createBuffer();
-    //     gl.bindBuffer(gl.ARRAY_BUFFER, this.numTextureCoordBuffer);
-    //     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.numTextureCoordinates), gl.STATIC_DRAW);
-    // }
-
-    constructor(color, moving, gl, size, cubePosition, pos_obj, tex_obj, norm_obj, pos_ind_obj, tex_ind_obj, norm_ind_obj) {
+    constructor(color, moving, gl, size, cubePosition, pos_obj, tex_obj, pos_ind_obj, tex_ind_obj) {
         this.moving = moving;
         this.gl = gl;
         this.positions = pos_obj.map((point) => point * size);
 
-        //
-        let full = [];
-        this.col = tex_ind_obj.length * 8;
-        let j = 0;
-        for(let i=0; i < tex_ind_obj.length; i= i+3)
-        {
-            //Вершины
-            full.push(pos_obj[pos_ind_obj[i]]);
-            full.push(pos_obj[pos_ind_obj[i+1]]);
-            full.push(pos_obj[pos_ind_obj[i+2]]);
-            //Текстуры
-            full.push(tex_obj[tex_ind_obj[j]]);
-            full.push(tex_obj[tex_ind_obj[j+1]]);
-            j = j+2;
-            //Нормали
-            full.push(norm_obj[norm_ind_obj[i]]);
-            full.push(norm_obj[norm_ind_obj[i+1]]);
-            full.push(norm_obj[norm_ind_obj[i+2]]);
-        }
-        this.triangles = pos_ind_obj;
-
-        //this.position = cubePosition;
-        this.position = full;
+        this.position = cubePosition;
         this.positionBuffer = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.positions), this.gl.STATIC_DRAW);
+
+
+        this.triangles = pos_ind_obj;
+        this.triangleBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.triangleBuffer);
+        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.triangles), this.gl.STATIC_DRAW);
 	
-        // this.numTextureCoordinates = tex_obj;
-        // this.numTextureCoordBuffer = gl.createBuffer();
-        // gl.bindBuffer(gl.ARRAY_BUFFER, this.numTextureCoordBuffer);
-        // gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.numTextureCoordinates), gl.STATIC_DRAW);
+        this.numTextureCoordinates = tex_obj;
+        this.numTextureCoordBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.numTextureCoordBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.numTextureCoordinates), gl.STATIC_DRAW);
     }
 
     getBuffers() {
         return {
             position: this.positionBuffer,
+            //color: this.colorBuffer,
             indices: this.triangleBuffer,
             raw_indices: this.triangles,
         };
@@ -70,11 +33,11 @@ class Cube {
     setVertexes(programInfo) {
         const gl = this.gl;
         gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
-        gl.vertexAttribPointer(programInfo.attribLocations.vertexPosition,3, gl.FLOAT, false,  8,0);//8 * sizeof(gl.FLOAT), 0 * sizeof(gl.FLOAT));
+        gl.vertexAttribPointer(programInfo.attribLocations.vertexPosition,3, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
         
         gl.bindBuffer(this.gl.ARRAY_BUFFER, this.numTextureCoordBuffer);
-        gl.vertexAttribPointer(programInfo.attribLocations.numTextureCoord, 2, gl.FLOAT, false,  8,3);  // * sizeof(gl.FLOAT), 3 * sizeof(gl.FLOAT));
+        gl.vertexAttribPointer(programInfo.attribLocations.numTextureCoord, 2, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(programInfo.attribLocations.numTextureCoord);
     }
 
@@ -240,24 +203,24 @@ class Scene {
         else
         {
             this.objects = [
-                // new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]+3, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
-                // new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]-3, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
-                // new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]+3, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
-                // new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]-3, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]+3, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]-3, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]+3, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]-3, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
 
-                // new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]+9, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
-                // new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]-9, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
-                // new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]+9, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
-                // new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]-9, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]+9, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]-9, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]+9, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]-9, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
 
-                // new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]+15, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
-                // new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]-15, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
-                // new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]+15, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
-                // new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]-15, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]+15, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]-15, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]+15, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 3, [sqCentr[0]-15, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareTriangles, SquareTriangles),
                 
-                new Cube([1.0, 1.0, 1.0, 1], true, this.gl, 2, curPositionCenterMark42, pos,tex,norm,pos_ind, tex_ind,norm_ind),//true
-                // new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 0.6, curPositionCenterKatarina, posCapShield, texCapShield, pos_indCapShield, tex_indCapShield),
-                // new Cube([1.0, 0.0, 0.0, 1], false, this.gl, scaleAlienAnimal, curPositionCenterAlienAnimal, posAlienAnimal, texAlienAnimal, pos_indAlienAnimal, tex_indAlienAnimal),
+                new Cube([1.0, 1.0, 1.0, 1], true, this.gl, 2, curPositionCenterMark42, pos,tex,pos_ind, tex_ind),//true
+                new Cube([1.0, 1.0, 1.0, 1], false, this.gl, 0.6, curPositionCenterKatarina, posCapShield, texCapShield, pos_indCapShield, tex_indCapShield),
+                new Cube([1.0, 0.0, 0.0, 1], false, this.gl, scaleAlienAnimal, curPositionCenterAlienAnimal, posAlienAnimal, texAlienAnimal, pos_indAlienAnimal, tex_indAlienAnimal),
 
             ]; 
             this.objects.forEach(obj => {
@@ -304,8 +267,7 @@ class Scene {
                 this.gl.uniformMatrix4fv(this.programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
                 this.gl.uniformMatrix4fv(this.programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
                 this.gl.uniformMatrix4fv(this.programInfo.uniformLocations.textureMatrix, false, textureMatrix);
-                //this.gl.drawElements(this.gl.TRIANGLES, buffers.raw_indices.length, this.gl.UNSIGNED_SHORT, 0);
-                this.gl.drawArrays(this.gl.TRIANGLES, 0, obj.col);
+                this.gl.drawElements(this.gl.TRIANGLES, buffers.raw_indices.length, this.gl.UNSIGNED_SHORT, 0);
                 this.gl.uniform1i(this.programInfo.uniformLocations.sampler1, 0);
                 this.gl.uniform1i(this.programInfo.uniformLocations.sampler2, 1);
                 this.gl.uniform1f(this.programInfo.uniformLocations.alpha, alpha);
