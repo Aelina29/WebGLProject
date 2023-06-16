@@ -17,7 +17,6 @@ class Object {
         {
             this.full.push(tex[tex_ind[i]*2]);
             this.full.push(tex[tex_ind[i]*2+1]);
-            //this.full.push(tex[tex_ind[i]*3+2]);
         }
         for(let i=0; i < norm_ind.length; i++)
         {
@@ -51,10 +50,10 @@ class Object {
         gl.vertexAttribPointer(programInfo.attribLocations.vertexPosition, 3, gl.FLOAT, false, 0, 0);
         
         gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
-        gl.vertexAttribPointer(programInfo.attribLocations.textureCoord, 2, gl.FLOAT, false, 0, this.full_vertex_count / 3 * Float32Array.BYTES_PER_ELEMENT);
+        gl.vertexAttribPointer(programInfo.attribLocations.textureCoord, 2, gl.FLOAT, false, 0, this.full_vertex_count*3 * Float32Array.BYTES_PER_ELEMENT);
         
         gl.enableVertexAttribArray(programInfo.attribLocations.normal);
-        gl.vertexAttribPointer(programInfo.attribLocations.normal, 3, gl.FLOAT, false, 0, (this.full_vertex_count/3+this.full_texture_count/2) * Float32Array.BYTES_PER_ELEMENT);
+        gl.vertexAttribPointer(programInfo.attribLocations.normal, 3, gl.FLOAT, false, 0, (this.full_vertex_count*3+this.full_texture_count*2) * Float32Array.BYTES_PER_ELEMENT);
     }
 
     toPosition(Matrix) {
@@ -80,7 +79,6 @@ class Object {
 
 //============================================================================================================
 
-//vec3?? aVertexPosition;
 var cubeVertexShader = `
 attribute vec4 aVertexPosition;
 attribute vec2 aTextureCoord;
@@ -92,8 +90,7 @@ varying highp vec3 vNormal;
 uniform mat4 uTextureMatrix;
 void main(void) {
     gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-    //vTextureCoord = aTextureCoord;
-    vTextureCoord = ((uTextureMatrix) * vec4(aTextureCoord, 0.0 , 1.0)).xy;
+    vTextureCoord = aTextureCoord;
     vNormal = aNormal;
 }`
 
@@ -189,7 +186,7 @@ class Scene {
     }
 
     start() {
-        const textureMark42 = loadTexture(this.gl, imageMemCat.src); //imageMemCat imageGradient imageMark42
+        const textureMark42 = loadTexture(this.gl, imageMark42.src); //imageMemCat imageGradient imageMark42
         const render = () => {
             this.drawScene( [textureMark42]);
             requestAnimationFrame(render);
@@ -221,10 +218,7 @@ class Scene {
             ]; 
             this.objects.forEach(obj => {                
                 const textureMatrix = mat4.create();
-                // совмещаем координаты
-                mat4.translate(textureMatrix, textureMatrix, [0.5, 0.5, 0.0]);
-                mat4.rotate(textureMatrix, textureMatrix, 0, [0, 0, 1.0]);
-                mat4.translate(textureMatrix, textureMatrix, [-0.5, -0.5, 0.0]);
+
                 var modelViewMatrix = mat4.create();
                 
                 //движение
@@ -304,8 +298,6 @@ TargetCube = 0;
 
 //=========================================================================================================================
 
-// let alpha = 1.0;
-
 // У WebGL1 разные требования к изображениям, имеющим размер степени 2 и к не имеющим размер степени 2
 function isPowerOf2(value) {
     return (value & (value - 1)) === 0;
@@ -341,38 +333,13 @@ function loadTexture(gl, url) {
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
         }
     };
     image.crossOrigin = "anonymous"
     image.src = url;
     return texture;
 }
-
-// function loadTexture(gl, url) {
-//     // создание текстуры
-//     const texture = gl.createTexture();
-//     gl.bindTexture(gl.TEXTURE_2D, texture);
-    
-//     // загрузка изображения
-//     const image = new Image();
-//     image.onload = function() {
-//         gl.bindTexture(gl.TEXTURE_2D, texture);
-//         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-//         if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
-//             // Размер соответствует степени 2
-//             gl.generateMipmap(gl.TEXTURE_2D);
-//         } else {
-//             // устанавливаем натяжение по краям
-//             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-//             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-//             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-//         }
-//     };
-//     image.crossOrigin = "anonymous";
-//     image.src = url;
-//     return texture;
-// }
-
 
 const imageMark42 = document.getElementById("texMark42");
 const imageBrusch = document.getElementById("texBrusch");
@@ -391,7 +358,7 @@ let tex_ind = [];
 let norm_ind = [];
 
 function main() {//ПОЧИСТИ OBJ ОТ ДВОЙНЫХ ПРОБЕЛОВ!!
-    fetch('./obj_models/cube.obj') //Mark42
+    fetch('./obj_models/Mark42.obj') //Mark42 cube
         .then(response => response.text())
         .then(data => {
             //console.log(data);
@@ -409,7 +376,6 @@ function main() {//ПОЧИСТИ OBJ ОТ ДВОЙНЫХ ПРОБЕЛОВ!!
                 case 'vt':
                     tex.push(parseFloat(splitLine[1]));
                     tex.push(parseFloat(splitLine[2]));
-                    //tex.push(parseFloat(splitLine[3]));
                     break
                 case 'v':
                     pos.push(parseFloat(splitLine[1]));
@@ -423,7 +389,7 @@ function main() {//ПОЧИСТИ OBJ ОТ ДВОЙНЫХ ПРОБЕЛОВ!!
 
                     tex_ind.push(parseFloat(splitLine[1].split("/")[1])-1);
                     tex_ind.push(parseFloat(splitLine[2].split("/")[1])-1);
-                    tex_ind.push(parseFloat(splitLine[3].split("/")[2])-1);
+                    tex_ind.push(parseFloat(splitLine[3].split("/")[1])-1);
 
                     norm_ind.push(parseFloat(splitLine[1].split("/")[2])-1);
                     norm_ind.push(parseFloat(splitLine[2].split("/")[2])-1);
