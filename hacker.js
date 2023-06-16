@@ -190,7 +190,7 @@ class Scene {
         const textureBrusch = loadTexture(this.gl, imageBrusch.src);
         const textureKatarina = loadTexture(this.gl, imageKatarina.src);
         const textureCatOrange = loadTexture(this.gl, imageCatOrange.src);
-        // const textureGradient = loadTexture(this.gl, imageGradient.src);
+        const textureGradient = loadTexture(this.gl, imageGradient.src);
         const render = () => {
             this.drawScene([textureMark42, textureKatarina, textureCatOrange, textureBrusch,textureBrusch,textureBrusch,textureBrusch, textureBrusch,textureBrusch,textureBrusch,textureBrusch, textureBrusch,textureBrusch,textureBrusch,textureBrusch]);
             requestAnimationFrame(render);
@@ -382,7 +382,7 @@ const imageBrusch = document.getElementById("texBrusch");
 const imageKatarina = document.getElementById("texKatarina");
 const imageCatOrange = document.getElementById("texCatOrange");
 // const imageMemCat = document.getElementById("texMemCat");
-// const imageGradient = document.getElementById("texGradient");
+const imageGradient = document.getElementById("texGradient");
 
 //Square=================================================================================================================================
 SquarePositions = [
@@ -521,7 +521,7 @@ function main() {//ПОЧИСТИ OBJ ОТ ДВОЙНЫХ ПРОБЕЛОВ!!
             isLoadingKatarina = false;
             console.log("Model Katarina parsing finished");   
         });
-    fetch('./obj_models/AlienAnimal.obj')
+    fetch('./obj_models/AlienAnimal.obj') //AlienAnimal Cat
         .then(response => response.text())
         .then(data => {
             //console.log(data);
