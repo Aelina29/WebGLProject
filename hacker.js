@@ -186,9 +186,13 @@ class Scene {
     }
 
     start() {
-        const textureMark42 = loadTexture(this.gl, imageMark42.src); //imageMemCat imageGradient imageMark42
+        const textureMark42 = loadTexture(this.gl, imageMark42.src);
+        const textureBrusch = loadTexture(this.gl, imageBrusch.src);
+        const textureKatarina = loadTexture(this.gl, imageKatarina.src);
+        const textureCatOrange = loadTexture(this.gl, imageCatOrange.src);
+        // const textureGradient = loadTexture(this.gl, imageGradient.src);
         const render = () => {
-            this.drawScene( [textureMark42]);
+            this.drawScene([textureMark42, textureKatarina, textureCatOrange, textureBrusch,textureBrusch,textureBrusch,textureBrusch, textureBrusch,textureBrusch,textureBrusch,textureBrusch, textureBrusch,textureBrusch,textureBrusch,textureBrusch]);
             requestAnimationFrame(render);
         }
         requestAnimationFrame(render);
@@ -202,6 +206,7 @@ class Scene {
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
         const projectionMatrix = mat4.create();
         mat4.perspective(projectionMatrix, this.fieldOfView, this.aspect, this.zNear, this.zFar);
+        const sqCentr  =[0, -7, -15];
         var i = 0;
         if(isLoading)
         {
@@ -212,13 +217,25 @@ class Scene {
         {
             this.objects = [ //constructor(moving, gl, scale, center, pos, tex, norm, pos_ind, tex_ind, norm_ind)
                 new Object(true, this.gl, 2, curPositionCenterMark42, pos, tex, norm, pos_ind, tex_ind, norm_ind), //true
-                // new Object(alse, this.gl, 0.6, curPositionCenterKatarina, posCapShield, texCapShield, pos_indCapShield, tex_indCapShield),
-                // new Object(false, this.gl, scaleAlienAnimal, curPositionCenterAlienAnimal, posAlienAnimal, texAlienAnimal, pos_indAlienAnimal, tex_indAlienAnimal),
+                new Object(false, this.gl, 0.6, curPositionCenterKatarina, posKatarina, texKatarina, normKatarina, pos_indKatarina, tex_indKatarina, norm_indKatarina),
+                new Object(false, this.gl, 0.25, curPositionCenterAlienAnimal, posAlienAnimal, texAlienAnimal, normAlienAnimal, pos_indAlienAnimal, tex_indAlienAnimal, norm_indAlienAnimal),
+    
+                new Object(false, this.gl, 3, [sqCentr[0]+3, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareNormals,SquareTriangles, SquareTriangles,SquareTriangles),
+                new Object(false, this.gl, 3, [sqCentr[0]-3, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareNormals,SquareTriangles, SquareTriangles,SquareTriangles),
+                new Object(false, this.gl, 3, [sqCentr[0]+3, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareNormals,SquareTriangles, SquareTriangles,SquareTriangles),
+                new Object(false, this.gl, 3, [sqCentr[0]-3, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareNormals,SquareTriangles, SquareTriangles,SquareTriangles),
 
-            ]; 
-            this.objects.forEach(obj => {                
-                const textureMatrix = mat4.create();
+                new Object(false, this.gl, 3, [sqCentr[0]+9, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareNormals,SquareTriangles, SquareTriangles,SquareTriangles),
+                new Object(false, this.gl, 3, [sqCentr[0]-9, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareNormals,SquareTriangles, SquareTriangles,SquareTriangles),
+                new Object(false, this.gl, 3, [sqCentr[0]+9, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareNormals,SquareTriangles, SquareTriangles,SquareTriangles),
+                new Object(false, this.gl, 3, [sqCentr[0]-9, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareNormals,SquareTriangles, SquareTriangles,SquareTriangles),
 
+                new Object(false, this.gl, 3, [sqCentr[0]+15, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareNormals,SquareTriangles, SquareTriangles,SquareTriangles),
+                new Object(false, this.gl, 3, [sqCentr[0]-15, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareNormals,SquareTriangles, SquareTriangles,SquareTriangles),
+                new Object(false, this.gl, 3, [sqCentr[0]+15, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareNormals,SquareTriangles, SquareTriangles,SquareTriangles),
+                new Object(false, this.gl, 3, [sqCentr[0]-15, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareNormals,SquareTriangles, SquareTriangles,SquareTriangles),
+            ];
+            this.objects.forEach(obj => {
                 var modelViewMatrix = mat4.create();
                 
                 //движение
@@ -236,16 +253,16 @@ class Scene {
                 obj.setVertexes(this.programInfo);
     
                 // Указываем WebGL, что мы используем текстурный регистр 1
-                this.gl.activeTexture(this.gl.TEXTURE1);
+                this.gl.activeTexture(this.gl.TEXTURE0);
                 // Связываем текстуру с регистром
                 this.gl.bindTexture(this.gl.TEXTURE_2D, textures[i]);
     
                 const buffers = obj.getBuffers();
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffers.full);
-                // if(i == this.objects.length-2)
-                //     TargetCube = 1;
-                // else
-                //     TargetCube = 0;
+                if(i == 1)
+                    TargetCube = 1;
+                else
+                    TargetCube = 0;
 
                 this.gl.useProgram(this.programInfo.program);
 
@@ -259,7 +276,7 @@ class Scene {
                 i++;
             });
             curRotation += currentSpeedRotation;
-            //check_intersection();
+            check_intersection();
         }
     }  
 
@@ -293,8 +310,27 @@ class Scene {
 //=========================================================================================================================
 curRotation = 0.0;
 curPositionCenterMark42 = [0, -3.95, -13];
+curPositionCenterKatarina = [-5, -3.95, -13];
+curPositionCenterAlienAnimal = [5, -3.95, -13];
 colorBlend = 0;
 TargetCube = 0;
+function check_intersection()
+{
+    let distance = Math.sqrt(Math.pow(curPositionCenterAlienAnimal[0]-curPositionCenterMark42[0],2)+Math.pow(curPositionCenterAlienAnimal[1]-curPositionCenterMark42[1],2)+Math.pow(curPositionCenterAlienAnimal[2]-curPositionCenterMark42[2],2));
+    //console.log(distance);
+    let del = 0.1;
+    if(distance <= 3.75)//2.9410882339705524) 4.589662296945164
+    {
+        //alert("intersection");
+        //intersection++;
+        //console.log(intersection);
+        colorBlend = 1;
+    }        
+    else
+    {
+        colorBlend = 0;
+    }
+}
 
 //=========================================================================================================================
 
@@ -345,8 +381,24 @@ const imageMark42 = document.getElementById("texMark42");
 const imageBrusch = document.getElementById("texBrusch");
 const imageKatarina = document.getElementById("texKatarina");
 const imageCatOrange = document.getElementById("texCatOrange");
-const imageMemCat = document.getElementById("texMemCat");
-const imageGradient = document.getElementById("texGradient");
+// const imageMemCat = document.getElementById("texMemCat");
+// const imageGradient = document.getElementById("texGradient");
+
+//Square=================================================================================================================================
+SquarePositions = [
+    -1.0,  1.0, -1.0,
+    -1.0,  1.0,  1.0,
+    1.0,  1.0,  1.0,
+    1.0,  1.0, -1.0,
+];
+SquareTextureCoordinates = [
+    0.0, 1.0,
+    0.0, 0.0,
+    1.0, 0.0,
+    1.0, 1.0,
+];        
+SquareTriangles = [0,1,2, 0,2,3];
+SquareNormals = [0, 1, 0];
 
 //Mark42=================================================================================================================================
 let isLoading = true;
@@ -356,6 +408,24 @@ let norm = [];
 let pos_ind = [];
 let tex_ind = [];
 let norm_ind = [];
+
+//Katarina=================================================================================================================================
+let isLoadingKatarina = true;
+let posKatarina = [];
+let texKatarina = [];
+let normKatarina = [];
+let pos_indKatarina = [];
+let tex_indKatarina = [];
+let norm_indKatarina = [];
+
+//AlienAnimal=================================================================================================================================
+let isLoadingAlienAnimal = true;
+let posAlienAnimal = [];
+let texAlienAnimal = [];
+let normAlienAnimal = [];
+let pos_indAlienAnimal= [];
+let tex_indAlienAnimal = [];
+let norm_indAlienAnimal = [];
 
 function main() {//ПОЧИСТИ OBJ ОТ ДВОЙНЫХ ПРОБЕЛОВ!!
     fetch('./obj_models/Mark42.obj') //Mark42 cube
@@ -403,6 +473,100 @@ function main() {//ПОЧИСТИ OBJ ОТ ДВОЙНЫХ ПРОБЕЛОВ!!
         .finally(function () {
             isLoading = false;
             console.log("Model Mark42 parsing finished");   
+        });
+    fetch('./obj_models/Katarina.obj')
+        .then(response => response.text())
+        .then(data => {
+            //console.log(data);
+            const lines = data.split('\n').join('\r').split('\r');
+            let splitLine = [];
+            lines.forEach(function(line) {
+                //console.log(line);
+                splitLine = line.split(' ');
+                switch(splitLine[0]) {                    
+                    case 'vn':
+                        normKatarina.push(parseFloat(splitLine[1]));
+                        normKatarina.push(parseFloat(splitLine[2]));
+                        normKatarina.push(parseFloat(splitLine[3]));//их нет(
+                        break
+                    case 'vt':
+                        texKatarina.push(parseFloat(splitLine[1]));
+                        texKatarina.push(parseFloat(splitLine[2]));
+                        break
+                    case 'v':
+                        posKatarina.push(parseFloat(splitLine[1]));
+                        posKatarina.push(parseFloat(splitLine[2]));
+                        posKatarina.push(parseFloat(splitLine[3]));
+                        break
+                    case 'f':
+                        pos_indKatarina.push(parseFloat(splitLine[1].split("/")[0])-1);
+                        pos_indKatarina.push(parseFloat(splitLine[2].split("/")[0])-1);
+                        pos_indKatarina.push(parseFloat(splitLine[3].split("/")[0])-1);
+
+                        tex_indKatarina.push(parseFloat(splitLine[1].split("/")[1])-1);
+                        tex_indKatarina.push(parseFloat(splitLine[2].split("/")[1])-1);
+                        tex_indKatarina.push(parseFloat(splitLine[3].split("/")[1])-1);
+
+                        norm_indKatarina.push(parseFloat(splitLine[1].split("/")[2])-1);
+                        norm_indKatarina.push(parseFloat(splitLine[2].split("/")[2])-1);
+                        norm_indKatarina.push(parseFloat(splitLine[3].split("/")[2])-1);
+
+                        break
+                    default:
+                        break
+                    }
+            });
+        })
+        .finally(function () {
+            isLoadingKatarina = false;
+            console.log("Model Katarina parsing finished");   
+        });
+    fetch('./obj_models/AlienAnimal.obj')
+        .then(response => response.text())
+        .then(data => {
+            //console.log(data);
+            const lines = data.split('\n').join('\r').split('\r');
+            let splitLine = [];
+            lines.forEach(function(line) {
+                //console.log(line);
+                splitLine = line.split(' ');
+                switch(splitLine[0]) {                    
+                    case 'vn':
+                        normAlienAnimal.push(parseFloat(splitLine[1]));
+                        normAlienAnimal.push(parseFloat(splitLine[2]));
+                        normAlienAnimal.push(parseFloat(splitLine[3]));//их нет(
+                        break
+                    case 'vt':
+                        texAlienAnimal.push(parseFloat(splitLine[1]));
+                        texAlienAnimal.push(parseFloat(splitLine[2]));
+                        break
+                    case 'v':
+                        posAlienAnimal.push(parseFloat(splitLine[1]));
+                        posAlienAnimal.push(parseFloat(splitLine[2]));
+                        posAlienAnimal.push(parseFloat(splitLine[3]));
+                        break
+                    case 'f':
+                        pos_indAlienAnimal.push(parseFloat(splitLine[1].split("/")[0])-1);
+                        pos_indAlienAnimal.push(parseFloat(splitLine[2].split("/")[0])-1);
+                        pos_indAlienAnimal.push(parseFloat(splitLine[3].split("/")[0])-1);
+
+                        tex_indAlienAnimal.push(parseFloat(splitLine[1].split("/")[1])-1);
+                        tex_indAlienAnimal.push(parseFloat(splitLine[2].split("/")[1])-1);
+                        tex_indAlienAnimal.push(parseFloat(splitLine[3].split("/")[1])-1);
+
+                        norm_indAlienAnimal.push(parseFloat(splitLine[1].split("/")[2])-1);
+                        norm_indAlienAnimal.push(parseFloat(splitLine[2].split("/")[2])-1);
+                        norm_indAlienAnimal.push(parseFloat(splitLine[3].split("/")[2])-1);
+                        
+                        break
+                    default:
+                        break
+                    }
+            });
+        })
+        .finally(function () {
+            isLoadingAlienAnimal = false;
+            console.log("Model AlienAnimal parsing finished");   
         });
     const canvas = document.querySelector('canvas');
     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
