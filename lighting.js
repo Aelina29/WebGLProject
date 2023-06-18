@@ -132,6 +132,7 @@ void main(void) {
 const ROTATION_SPEED = 0.015;
 const MOVE_SPEED = 0.05;
 let currentSpeedRotation = 0;
+let currentSpeedRotationz = 0;
 let currentSpeedX = 0;
 let currentSpeedY = 0;
 let currentSpeedZ = 0;
@@ -152,7 +153,11 @@ window.addEventListener('keydown', event => {
     else if (event.key === 'ArrowUp')   //стрелка вверх, дальше
         currentSpeedZ = -MOVE_SPEED;
     else if (event.key === 'ArrowDown')   //стрелка вниз, ближе
-        currentSpeedZ = MOVE_SPEED;          
+        currentSpeedZ = MOVE_SPEED;       
+    else if (event.key.toLowerCase() === 'o' || event.key.toLowerCase() === 'щ')   //O Щ, от себя по z
+        currentSpeedRotationz = -MOVE_SPEED;
+    else if (event.key.toLowerCase() === 'l' || event.key.toLowerCase() === 'д')   //L Д, на себя по z
+        currentSpeedRotationz = MOVE_SPEED;   
 });
 window.addEventListener('keyup', event => {
     if (event.key === 'ArrowLeft')              //<-, влево поворот
@@ -170,10 +175,15 @@ window.addEventListener('keyup', event => {
     else if (event.key === 'ArrowUp')   //стрелка вверх, дальше
         currentSpeedZ = 0;
     else if (event.key === 'ArrowDown')   //стрелка вниз, ближе
-        currentSpeedZ = 0;  
+        currentSpeedZ = 0; 
+    else if (event.key.toLowerCase() === 'o' || event.key.toLowerCase() === 'щ')   //O Щ, от себя по z
+        currentSpeedRotationz = 0;
+    else if (event.key.toLowerCase() === 'l' || event.key.toLowerCase() === 'д')   //L Д, на себя по z
+        currentSpeedRotationz = 0;  
 });
 
 const rotateEachCube = (obj, Matrix, rad) => obj.rotate(Matrix, rad, [0, 1, 0]);
+const rotateEachCubez = (obj, Matrix, rad) => obj.rotate(Matrix, rad, [1, 0, 0]);
 
 //============================================================================================================
 
@@ -229,6 +239,7 @@ class Scene {
         mat4.perspective(projectionMatrix, this.fieldOfView, this.aspect, this.zNear, this.zFar);
         const sqCentr  =[0, -7, -15];
         var i = 0;
+        var cat = 0;
         if(isLoading)
         {
             console.log("Loading models from obj");
@@ -236,10 +247,12 @@ class Scene {
         }
         else
         {
-            this.objects = [ //constructor(moving, gl, scale, center, pos, tex, norm, pos_ind, tex_ind, norm_ind)
-                new Object(true, this.gl, 2, curPositionCenterMark42, pos, tex, norm, pos_ind, tex_ind, norm_ind), //true
+            this.objects = [ //constructor(moving, gl, scale, center, pos, tex, norm, pos_ind, tex_ind, norm_ind) //curPositionCenterMark42
+                new Object(false, this.gl, 2, [0, -3.95, -13], pos, tex, norm, pos_ind, tex_ind, norm_ind), //true
                 new Object(false, this.gl, 0.6, curPositionCenterKatarina, posKatarina, texKatarina, normKatarina, pos_indKatarina, tex_indKatarina, norm_indKatarina),
-                new Object(false, this.gl, 0.25, curPositionCenterAlienAnimal, posAlienAnimal, texAlienAnimal, normAlienAnimal, pos_indAlienAnimal, tex_indAlienAnimal, norm_indAlienAnimal),
+                //new Object(false, this.gl, 0.25, curPositionCenterAlienAnimal, posAlienAnimal, texAlienAnimal, normAlienAnimal, pos_indAlienAnimal, tex_indAlienAnimal, norm_indAlienAnimal),
+                //new Object(true, this.gl, 0.05, curPositionCenterMark42, posAlienAnimal, texAlienAnimal, normAlienAnimal, pos_indAlienAnimal, tex_indAlienAnimal, norm_indAlienAnimal),
+                new Object(true, this.gl, 2, curPositionCenterMark42, posAlienAnimal, texAlienAnimal, normAlienAnimal, pos_indAlienAnimal, tex_indAlienAnimal, norm_indAlienAnimal),
     
                 new Object(false, this.gl, 3, [sqCentr[0]+3, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareNormals,SquareTriangles, SquareTriangles,SquareTriangles),
                 new Object(false, this.gl, 3, [sqCentr[0]-3, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareNormals,SquareTriangles, SquareTriangles,SquareTriangles),
@@ -266,8 +279,16 @@ class Scene {
                     obj.position = curPositionCenterMark42;
                     //console.log(obj.position);
                 }
+
                 obj.toPosition(modelViewMatrix);
+                // if(cat == 2){
+                //     rotateEachCubez(obj, modelViewMatrix, -1.5500000000000007);
+                // }
+                // cat++;
+    
                 if(obj.moving){
+                    rotateEachCubez(obj, modelViewMatrix, curRotationz);//-1.5500000000000007);
+                    //console.log(curRotationz);
                     rotateEachCube(obj, modelViewMatrix, curRotation);
                 }
                 
@@ -280,26 +301,29 @@ class Scene {
     
                 const buffers = obj.getBuffers();
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffers.full);
-                if(i == 1)
-                    TargetCube = 1;
-                else
-                    TargetCube = 0;
+                // if(i == 2) //red
+                //     TargetCube = 1;
+                // else
+                //     TargetCube = 0;
 
                 this.gl.useProgram(this.programInfo.program);
 
                 this.gl.uniformMatrix4fv(this.programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
                 this.gl.uniformMatrix4fv(this.programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
-                this.gl.drawArrays(this.gl.TRIANGLES, 0, buffers.full_vertex_count);
+                //this.gl.drawArrays(this.gl.TRIANGLES, 0, buffers.full_vertex_count);
                 this.gl.uniform1i(this.programInfo.uniformLocations.sampler, 0);
                 this.gl.uniform1i(this.programInfo.uniformLocations.colorBlend, colorBlend);
                 this.gl.uniform1i(this.programInfo.uniformLocations.TargetCube, TargetCube);                
                 
                 this.gl.uniform3fv(this.programInfo.uniformLocations.lightDirection, lightDirection);
                 this.gl.uniform3fv(this.programInfo.uniformLocations.viewPosition, viewPosition);
-
+                
+                this.gl.drawArrays(this.gl.TRIANGLES, 0, buffers.full_vertex_count);
+                
                 i++;
             });
             curRotation += currentSpeedRotation;
+            curRotationz += currentSpeedRotationz;
             check_intersection();
         }
     }  
@@ -333,11 +357,13 @@ class Scene {
 
 //=========================================================================================================================
 curRotation = 0.0;
+curRotationz = 0.0;
 viewPosition = [0.0, 0.0, 10.0];
 lightDirection = [0.0, 10.0, 0.0];
-curPositionCenterMark42 = [0, -3.95, -13];
+//curPositionCenterMark42 = [0, -3.95, -13];
+curPositionCenterMark42 = [5, -3.95, -13];//for cat
 curPositionCenterKatarina = [-5, -3.95, -13];
-curPositionCenterAlienAnimal = [5, -3.95, -13];
+curPositionCenterAlienAnimal = [5, -3.95, -13]; 
 colorBlend = 0;
 TargetCube = 0;
 function check_intersection()
@@ -548,7 +574,7 @@ function main() {//ПОЧИСТИ OBJ ОТ ДВОЙНЫХ ПРОБЕЛОВ!!
             isLoadingKatarina = false;
             console.log("Model Katarina parsing finished");   
         });
-    fetch('./obj_models/AlienAnimal.obj') //AlienAnimal Cat
+    fetch('./obj_models/Cat_last.obj') //AlienAnimal Cat Cat_last Katarina
         .then(response => response.text())
         .then(data => {
             //console.log(data);
@@ -595,6 +621,65 @@ function main() {//ПОЧИСТИ OBJ ОТ ДВОЙНЫХ ПРОБЕЛОВ!!
             isLoadingAlienAnimal = false;
             console.log("Model AlienAnimal parsing finished");   
         });
+
+    // fetch('./obj_models/Cat.obj') //AlienAnimal Cat
+    //     .then(response => response.text())
+    //     .then(data => {
+    //         //console.log(data);
+    //         const lines = data.split('\n').join('\r').split('\r');
+    //         let splitLine = [];
+    //         lines.forEach(function(line) {
+    //             //console.log(line);
+    //             splitLine = line.split(' ');
+    //             switch(splitLine[0]) {                    
+    //                 case 'vn':
+    //                     // normAlienAnimal.push(parseFloat(splitLine[1])*(-1));
+    //                     // normAlienAnimal.push(parseFloat(splitLine[2])*(-1));
+    //                     // normAlienAnimal.push(parseFloat(splitLine[3])*(-1));
+    //                     normAlienAnimal.push(parseFloat(splitLine[1]));
+    //                     normAlienAnimal.push(parseFloat(splitLine[2]));
+    //                     normAlienAnimal.push(parseFloat(splitLine[3]));
+    //                     break
+    //                 case 'vt':
+    //                     texAlienAnimal.push(parseFloat(splitLine[1]));
+    //                     texAlienAnimal.push(parseFloat(splitLine[2]));
+    //                     break
+    //                 case 'v':
+    //                     posAlienAnimal.push(parseFloat(splitLine[1]));
+    //                     posAlienAnimal.push(parseFloat(splitLine[2]));
+    //                     posAlienAnimal.push(parseFloat(splitLine[3]));
+    //                     break
+    //                 case 'f':
+    //                     let pos_ind1 = parseFloat(splitLine[1].split("/")[0])-1;
+    //                     let pos_ind2 = parseFloat(splitLine[2].split("/")[0])-1;
+    //                     let pos_ind3 = parseFloat(splitLine[3].split("/")[0])-1;
+    //                     let pos_ind4 = parseFloat(splitLine[4].split("/")[0])-1;
+    //                     pos_indAlienAnimal.push(pos_ind1, pos_ind2, pos_ind3, pos_ind1, pos_ind3, pos_ind4);
+                        
+    //                     let tex_ind1 = parseFloat(splitLine[1].split("/")[1])-1;
+    //                     let tex_ind2 = parseFloat(splitLine[2].split("/")[1])-1;
+    //                     let tex_ind3 = parseFloat(splitLine[3].split("/")[1])-1;
+    //                     let tex_ind4 = parseFloat(splitLine[4].split("/")[1])-1;
+    //                     tex_indAlienAnimal.push(tex_ind1, tex_ind2, tex_ind3, tex_ind1, tex_ind3, tex_ind4);
+                        
+    //                     let norm_ind1 = parseFloat(splitLine[1].split("/")[2])-1;
+    //                     let norm_ind2 = parseFloat(splitLine[2].split("/")[2])-1;
+    //                     let norm_ind3 = parseFloat(splitLine[3].split("/")[2])-1;
+    //                     let norm_ind4 = parseFloat(splitLine[4].split("/")[2])-1;
+    //                     norm_indAlienAnimal.push(norm_ind1, norm_ind2, norm_ind3, norm_ind1, norm_ind3, norm_ind4);
+                        
+    //                     break
+    //                 default:
+    //                     break
+    //                 }
+    //         });
+    //     })
+    //     .finally(function () {
+    //         isLoadingAlienAnimal = false;
+    //         console.log("Model AlienAnimal parsing finished");   
+    //     });
+
+
     const canvas = document.querySelector('canvas');
     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
     if (!gl) {
