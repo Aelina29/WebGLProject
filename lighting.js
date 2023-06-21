@@ -81,7 +81,12 @@ class Object {
 const shaderFunctions = `
 float lambert(vec3 normal, vec3 lightPosition, float power) {
     return max(dot(normal, normalize(lightPosition)), 0.0) * power;
-}`
+}
+float gradient(float distance, float radius) {
+    float intensity = 1.0 - distance / radius;
+    return clamp(intensity, 0.0, 1.0);
+}
+`
 
 var cubeVertexShader = `
 attribute vec4 aVertexPosition;
@@ -112,6 +117,7 @@ uniform lowp int uTargetCube;
 uniform mat4 uModelViewMatrix;
 uniform vec3 uLightDirection;
 //uniform vec3 uViewPosition;
+uniform lowp int uLamp;
 
 ${shaderFunctions}
 void main(void) {
@@ -119,11 +125,41 @@ void main(void) {
 
     vec3 positionEye3 = vec3(uModelViewMatrix * vPosition);
     vec3 lightDirection = normalize(uLightDirection - positionEye3);
-    float light = lambert(vNormal, lightDirection, 1.0); //light power
+    float light = 0.0;
+    light += lambert(vNormal, lightDirection, 1.0); //light power
 
+    //фонари
+    if (uLamp == 1){
+        vec3 pointPos=vec3(-10.0, 0.0, -18.0);
+        vec3 pointLightDirection = normalize(pointPos - positionEye3);
+        float pointLightDistance = length(pointPos - positionEye3);
+        float pointLightIntensity = gradient(pointLightDistance, 5.0);
+        float pointLightPower = 5.0 * pointLightIntensity;
+        float pointLight = lambert(vNormal, pointLightDirection, pointLightPower);
+        light += pointLight;
+
+        pointPos=vec3(16.0, 0.0, -18.0);
+        pointLightDirection = normalize(pointPos - positionEye3);
+        pointLightDistance = length(pointPos - positionEye3);
+        pointLightIntensity = gradient(pointLightDistance, 5.0);
+        pointLightPower = 5.0 * pointLightIntensity;
+        pointLight = lambert(vNormal, pointLightDirection, pointLightPower);
+        light += pointLight;
+        
+        pointPos=vec3(3.0, 0.0, -18.0);
+        pointLightDirection = normalize(pointPos - positionEye3);
+        pointLightDistance = length(pointPos - positionEye3);
+        pointLightIntensity = gradient(pointLightDistance, 5.0);
+        pointLightPower = 5.0 * pointLightIntensity;
+        pointLight = lambert(vNormal, pointLightDirection, pointLightPower);
+        light += pointLight;
+    }  
+
+    //intersection
     if (uColorBlend == 1 && uTargetCube == 1) {
         gl_FragColor = vec4(gl_FragColor.rgb * vec3(1.0, 0.0, 0.0), 1.0);
     }
+    
     gl_FragColor.rgb *= light;
 }`
 
@@ -136,6 +172,7 @@ let currentSpeedRotationz = 0;
 let currentSpeedX = 0;
 let currentSpeedY = 0;
 let currentSpeedZ = 0;
+let Lamp = 1;
 
 window.addEventListener('keydown', event => {
     if (event.key === 'ArrowLeft')              //<-, влево поворот
@@ -157,7 +194,9 @@ window.addEventListener('keydown', event => {
     else if (event.key.toLowerCase() === 'o' || event.key.toLowerCase() === 'щ')   //O Щ, от себя по z
         currentSpeedRotationz = -MOVE_SPEED;
     else if (event.key.toLowerCase() === 'l' || event.key.toLowerCase() === 'д')   //L Д, на себя по z
-        currentSpeedRotationz = MOVE_SPEED;   
+        currentSpeedRotationz = MOVE_SPEED;
+    else if (event.key.toLowerCase() === 'z' || event.key.toLowerCase() === 'я')   //Z Я, фонарь
+        if(Lamp == 1) Lamp = 0; else Lamp = 1;
 });
 window.addEventListener('keyup', event => {
     if (event.key === 'ArrowLeft')              //<-, влево поворот
@@ -204,6 +243,7 @@ class Scene {
                 sampler: this.gl.getUniformLocation(shaderProgram, 'uSampler'),
                 colorBlend: this.gl.getUniformLocation(shaderProgram, 'uColorBlend'),
                 TargetCube: this.gl.getUniformLocation(shaderProgram, 'uTargetCube'),
+                Lamp: this.gl.getUniformLocation(shaderProgram, 'uLamp'),
                 
                 viewPosition: this.gl.getUniformLocation(shaderProgram, 'uViewPosition'),
                 lightDirection: this.gl.getUniformLocation(shaderProgram, 'uLightDirection'),
@@ -223,7 +263,7 @@ class Scene {
         const textureCatOrange = loadTexture(this.gl, imageCatOrange.src);
         const textureGradient = loadTexture(this.gl, imageGradient.src);
         const render = () => {
-            this.drawScene([textureMark42, textureKatarina, textureCatOrange, textureBrusch,textureBrusch,textureBrusch,textureBrusch, textureBrusch,textureBrusch,textureBrusch,textureBrusch, textureBrusch,textureBrusch,textureBrusch,textureBrusch]);
+            this.drawScene([textureMark42, textureKatarina, textureCatOrange, textureGradient, textureGradient, textureGradient, textureBrusch,textureBrusch,textureBrusch,textureBrusch, textureBrusch,textureBrusch,textureBrusch,textureBrusch, textureBrusch,textureBrusch,textureBrusch,textureBrusch]);
             requestAnimationFrame(render);
         }
         requestAnimationFrame(render);
@@ -248,12 +288,15 @@ class Scene {
         else
         {
             this.objects = [ //constructor(moving, gl, scale, center, pos, tex, norm, pos_ind, tex_ind, norm_ind) //curPositionCenterMark42
-                new Object(false, this.gl, 2, [0, -3.95, -13], pos, tex, norm, pos_ind, tex_ind, norm_ind), //true
+                new Object(true, this.gl, 2, curPositionCenterMark42, pos, tex, norm, pos_ind, tex_ind, norm_ind), //true
                 new Object(false, this.gl, 0.6, curPositionCenterKatarina, posKatarina, texKatarina, normKatarina, pos_indKatarina, tex_indKatarina, norm_indKatarina),
-                //new Object(false, this.gl, 0.25, curPositionCenterAlienAnimal, posAlienAnimal, texAlienAnimal, normAlienAnimal, pos_indAlienAnimal, tex_indAlienAnimal, norm_indAlienAnimal),
-                //new Object(true, this.gl, 0.05, curPositionCenterMark42, posAlienAnimal, texAlienAnimal, normAlienAnimal, pos_indAlienAnimal, tex_indAlienAnimal, norm_indAlienAnimal),
-                new Object(true, this.gl, 2, curPositionCenterMark42, posAlienAnimal, texAlienAnimal, normAlienAnimal, pos_indAlienAnimal, tex_indAlienAnimal, norm_indAlienAnimal),
-    
+                new Object(false, this.gl, 0.25, curPositionCenterAlienAnimal, posAlienAnimal, texAlienAnimal, normAlienAnimal, pos_indAlienAnimal, tex_indAlienAnimal, norm_indAlienAnimal),
+                //new Object(false, this.gl, 2, curPositionCenterAlienAnimal, posAlienAnimal, texAlienAnimal, normAlienAnimal, pos_indAlienAnimal, tex_indAlienAnimal, norm_indAlienAnimal),
+                
+                new Object(false, this.gl, 0.8, [-13.0, -5.0, -18], posStreetLight, texStreetLight, normStreetLight, pos_indStreetLight, tex_indStreetLight, norm_indStreetLight),
+                new Object(false, this.gl, 0.8, [13, -5.0, -18], posStreetLight, texStreetLight, normStreetLight, pos_indStreetLight, tex_indStreetLight, norm_indStreetLight),
+                new Object(false, this.gl, 0.8, [0, -5.0, -18], posStreetLight, texStreetLight, normStreetLight, pos_indStreetLight, tex_indStreetLight, norm_indStreetLight),
+            
                 new Object(false, this.gl, 3, [sqCentr[0]+3, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareNormals,SquareTriangles, SquareTriangles,SquareTriangles),
                 new Object(false, this.gl, 3, [sqCentr[0]-3, sqCentr[1], sqCentr[2]+3],SquarePositions,SquareTextureCoordinates,SquareNormals,SquareTriangles, SquareTriangles,SquareTriangles),
                 new Object(false, this.gl, 3, [sqCentr[0]+3, sqCentr[1], sqCentr[2]-3],SquarePositions,SquareTextureCoordinates,SquareNormals,SquareTriangles, SquareTriangles,SquareTriangles),
@@ -281,16 +324,16 @@ class Scene {
                 }
 
                 obj.toPosition(modelViewMatrix);
-                // if(cat == 2){
-                //     rotateEachCubez(obj, modelViewMatrix, -1.5500000000000007);
+                // if(cat == 3){
+                //     //rotateEachCube(obj, modelViewMatrix, 3.0);
                 // }
                 // cat++;
     
-                if(obj.moving){
-                    rotateEachCubez(obj, modelViewMatrix, curRotationz);//-1.5500000000000007);
-                    //console.log(curRotationz);
-                    rotateEachCube(obj, modelViewMatrix, curRotation);
-                }
+                // if(obj.moving){
+                //     rotateEachCubez(obj, modelViewMatrix, curRotationz);//-1.5500000000000007);
+                //     //console.log(curRotationz);
+                //     rotateEachCube(obj, modelViewMatrix, curRotation);
+                // }
                 
                 obj.setVertexes(this.programInfo);
     
@@ -301,22 +344,22 @@ class Scene {
     
                 const buffers = obj.getBuffers();
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffers.full);
-                // if(i == 2) //red
-                //     TargetCube = 1;
-                // else
-                //     TargetCube = 0;
+                if(i == 2) //red
+                    TargetCube = 1;
+                else
+                    TargetCube = 0;
 
                 this.gl.useProgram(this.programInfo.program);
 
                 this.gl.uniformMatrix4fv(this.programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
                 this.gl.uniformMatrix4fv(this.programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
-                //this.gl.drawArrays(this.gl.TRIANGLES, 0, buffers.full_vertex_count);
                 this.gl.uniform1i(this.programInfo.uniformLocations.sampler, 0);
                 this.gl.uniform1i(this.programInfo.uniformLocations.colorBlend, colorBlend);
                 this.gl.uniform1i(this.programInfo.uniformLocations.TargetCube, TargetCube);                
                 
                 this.gl.uniform3fv(this.programInfo.uniformLocations.lightDirection, lightDirection);
                 this.gl.uniform3fv(this.programInfo.uniformLocations.viewPosition, viewPosition);
+                this.gl.uniform1i(this.programInfo.uniformLocations.Lamp, Lamp);   
                 
                 this.gl.drawArrays(this.gl.TRIANGLES, 0, buffers.full_vertex_count);
                 
@@ -360,8 +403,8 @@ curRotation = 0.0;
 curRotationz = 0.0;
 viewPosition = [0.0, 0.0, 10.0];
 lightDirection = [0.0, 10.0, 0.0];
-//curPositionCenterMark42 = [0, -3.95, -13];
-curPositionCenterMark42 = [5, -3.95, -13];//for cat
+curPositionCenterMark42 = [0, -3.95, -13];
+//curPositionCenterMark42 = [5, -3.95, -13];//for cat
 curPositionCenterKatarina = [-5, -3.95, -13];
 curPositionCenterAlienAnimal = [5, -3.95, -13]; 
 colorBlend = 0;
@@ -402,7 +445,7 @@ function loadTexture(gl, url) {
     const border = 0;
     const srcFormat = gl.RGBA;
     const srcType = gl.UNSIGNED_BYTE;
-    const pixel = new Uint8Array([0, 0, 255, 255]);
+    const pixel = new Uint8Array([255, 0, 0, 255]);
     gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, width, height, border, srcFormat, srcType, pixel);
     const image = new Image();
     image.onload = function () {
@@ -479,6 +522,15 @@ let normAlienAnimal = [];
 let pos_indAlienAnimal= [];
 let tex_indAlienAnimal = [];
 let norm_indAlienAnimal = [];
+
+//StreetLight=================================================================================================================================
+let isLoadingStreetLight = true;
+let posStreetLight = [];
+let texStreetLight = [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0];
+let normStreetLight = [];
+let pos_indStreetLight = [];
+let tex_indStreetLight = [];
+let norm_indStreetLight = [];
 
 function main() {//ПОЧИСТИ OBJ ОТ ДВОЙНЫХ ПРОБЕЛОВ!!
     fetch('./obj_models/Mark42.obj') //Mark42 cube
@@ -574,7 +626,7 @@ function main() {//ПОЧИСТИ OBJ ОТ ДВОЙНЫХ ПРОБЕЛОВ!!
             isLoadingKatarina = false;
             console.log("Model Katarina parsing finished");   
         });
-    fetch('./obj_models/Cat_last.obj') //AlienAnimal Cat Cat_last Katarina
+    fetch('./obj_models/AlienAnimal.obj') //AlienAnimal Cat_last Katarina
         .then(response => response.text())
         .then(data => {
             //console.log(data);
@@ -621,63 +673,61 @@ function main() {//ПОЧИСТИ OBJ ОТ ДВОЙНЫХ ПРОБЕЛОВ!!
             isLoadingAlienAnimal = false;
             console.log("Model AlienAnimal parsing finished");   
         });
-
-    // fetch('./obj_models/Cat.obj') //AlienAnimal Cat
-    //     .then(response => response.text())
-    //     .then(data => {
-    //         //console.log(data);
-    //         const lines = data.split('\n').join('\r').split('\r');
-    //         let splitLine = [];
-    //         lines.forEach(function(line) {
-    //             //console.log(line);
-    //             splitLine = line.split(' ');
-    //             switch(splitLine[0]) {                    
-    //                 case 'vn':
-    //                     // normAlienAnimal.push(parseFloat(splitLine[1])*(-1));
-    //                     // normAlienAnimal.push(parseFloat(splitLine[2])*(-1));
-    //                     // normAlienAnimal.push(parseFloat(splitLine[3])*(-1));
-    //                     normAlienAnimal.push(parseFloat(splitLine[1]));
-    //                     normAlienAnimal.push(parseFloat(splitLine[2]));
-    //                     normAlienAnimal.push(parseFloat(splitLine[3]));
-    //                     break
-    //                 case 'vt':
-    //                     texAlienAnimal.push(parseFloat(splitLine[1]));
-    //                     texAlienAnimal.push(parseFloat(splitLine[2]));
-    //                     break
-    //                 case 'v':
-    //                     posAlienAnimal.push(parseFloat(splitLine[1]));
-    //                     posAlienAnimal.push(parseFloat(splitLine[2]));
-    //                     posAlienAnimal.push(parseFloat(splitLine[3]));
-    //                     break
-    //                 case 'f':
-    //                     let pos_ind1 = parseFloat(splitLine[1].split("/")[0])-1;
-    //                     let pos_ind2 = parseFloat(splitLine[2].split("/")[0])-1;
-    //                     let pos_ind3 = parseFloat(splitLine[3].split("/")[0])-1;
-    //                     let pos_ind4 = parseFloat(splitLine[4].split("/")[0])-1;
-    //                     pos_indAlienAnimal.push(pos_ind1, pos_ind2, pos_ind3, pos_ind1, pos_ind3, pos_ind4);
+    fetch('./obj_models/StreetLight.obj') //AlienAnimal Cat
+        .then(response => response.text())
+        .then(data => {
+            //console.log(data);
+            const lines = data.split('\n').join('\r').split('\r');
+            let splitLine = [];
+            lines.forEach(function(line) {
+                //console.log(line);
+                splitLine = line.split(' ');
+                switch(splitLine[0]) {                    
+                    case 'vn':
+                        normStreetLight.push(parseFloat(splitLine[1]));
+                        normStreetLight.push(parseFloat(splitLine[2]));
+                        normStreetLight.push(parseFloat(splitLine[3]));
+                        break
+                    case 'vt':
+                        texStreetLight.push(parseFloat(splitLine[1]));
+                        texStreetLight.push(parseFloat(splitLine[2]));
+                        break
+                    case 'v':
+                        posStreetLight.push(parseFloat(splitLine[1]));
+                        posStreetLight.push(parseFloat(splitLine[2]));
+                        posStreetLight.push(parseFloat(splitLine[3]));
+                        break
+                    case 'f':
+                        let pos_ind1 = parseFloat(splitLine[1].split("/")[0])-1;
+                        let pos_ind2 = parseFloat(splitLine[2].split("/")[0])-1;
+                        let pos_ind3 = parseFloat(splitLine[3].split("/")[0])-1;
+                        let pos_ind4 = parseFloat(splitLine[4].split("/")[0])-1;
+                        pos_indStreetLight.push(pos_ind1, pos_ind2, pos_ind3, pos_ind1, pos_ind3, pos_ind4);
                         
-    //                     let tex_ind1 = parseFloat(splitLine[1].split("/")[1])-1;
-    //                     let tex_ind2 = parseFloat(splitLine[2].split("/")[1])-1;
-    //                     let tex_ind3 = parseFloat(splitLine[3].split("/")[1])-1;
-    //                     let tex_ind4 = parseFloat(splitLine[4].split("/")[1])-1;
-    //                     tex_indAlienAnimal.push(tex_ind1, tex_ind2, tex_ind3, tex_ind1, tex_ind3, tex_ind4);
+                        // let tex_ind1 = parseFloat(splitLine[1].split("/")[1])-1;
+                        // let tex_ind2 = parseFloat(splitLine[2].split("/")[1])-1;
+                        // let tex_ind3 = parseFloat(splitLine[3].split("/")[1])-1;
+                        // let tex_ind4 = parseFloat(splitLine[4].split("/")[1])-1;
+                        // tex_indStreetLight.push(tex_ind1, tex_ind2, tex_ind3, tex_ind1, tex_ind3, tex_ind4);
+                        //tex_indStreetLight.push(1, 2, 3, 1, 3, 4);
+                        tex_indStreetLight.push(0, 1, 2, 0, 2, 3);
                         
-    //                     let norm_ind1 = parseFloat(splitLine[1].split("/")[2])-1;
-    //                     let norm_ind2 = parseFloat(splitLine[2].split("/")[2])-1;
-    //                     let norm_ind3 = parseFloat(splitLine[3].split("/")[2])-1;
-    //                     let norm_ind4 = parseFloat(splitLine[4].split("/")[2])-1;
-    //                     norm_indAlienAnimal.push(norm_ind1, norm_ind2, norm_ind3, norm_ind1, norm_ind3, norm_ind4);
+                        let norm_ind1 = parseFloat(splitLine[1].split("/")[2])-1;
+                        let norm_ind2 = parseFloat(splitLine[2].split("/")[2])-1;
+                        let norm_ind3 = parseFloat(splitLine[3].split("/")[2])-1;
+                        let norm_ind4 = parseFloat(splitLine[4].split("/")[2])-1;
+                        norm_indStreetLight.push(norm_ind1, norm_ind2, norm_ind3, norm_ind1, norm_ind3, norm_ind4);
                         
-    //                     break
-    //                 default:
-    //                     break
-    //                 }
-    //         });
-    //     })
-    //     .finally(function () {
-    //         isLoadingAlienAnimal = false;
-    //         console.log("Model AlienAnimal parsing finished");   
-    //     });
+                        break
+                    default:
+                        break
+                    }
+            });
+        })
+        .finally(function () {
+            isLoadingAlienAnimal = false;
+            console.log("Model AlienAnimal parsing finished");   
+        });
 
 
     const canvas = document.querySelector('canvas');
